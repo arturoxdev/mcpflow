@@ -25,6 +25,7 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group"
+import { BrandMark } from "@/components/brand-mark"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { openCommandPalette } from "@/components/command-palette"
 import { boardsStore } from "@/lib/boards-store"
@@ -80,10 +81,13 @@ export function AppSidebar() {
       <SidebarHeader className="gap-3">
         <Link
           href="/boards"
-          className="px-2 py-1.5 text-xl font-semibold tracking-tight group-data-[collapsible=icon]:hidden"
+          className="flex items-center gap-2 px-2 py-1.5 text-xl font-semibold tracking-tight"
         >
-          <span className="text-foreground">Zen</span>
-          <span className="text-primary">Board</span>
+          <BrandMark className="size-6 shrink-0" />
+          <span className="group-data-[collapsible=icon]:hidden">
+            <span className="text-foreground">Zen</span>
+            <span className="text-primary">Board</span>
+          </span>
         </Link>
 
         <div className="px-1 group-data-[collapsible=icon]:hidden">
@@ -202,35 +206,35 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="gap-1">
-        <div className="relative group-data-[collapsible=icon]:hidden">
-          <div
-            aria-hidden
-            className="hover:bg-sidebar-accent flex items-center gap-2.5 rounded-md p-1.5 transition-colors"
-          >
-            <span className="from-chart-2 to-chart-3 grid size-7 shrink-0 place-items-center rounded-full bg-gradient-to-br text-xs font-semibold text-[#0e131b]">
-              {initial}
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="text-foreground truncate text-xs font-medium">
-                {firstName}
-              </div>
-              {email && (
-                <div className="text-muted-foreground truncate font-mono text-[10px]">
-                  {email}
+        <div className="flex items-center gap-1 group-data-[collapsible=icon]:hidden">
+          <div className="relative min-w-0 flex-1">
+            <div
+              aria-hidden
+              className="hover:bg-sidebar-accent flex items-center gap-2.5 rounded-md p-1.5 transition-colors"
+            >
+              <span className="from-chart-2 to-chart-3 grid size-7 shrink-0 place-items-center rounded-full bg-gradient-to-br text-xs font-semibold text-[#0e131b]">
+                {initial}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="text-foreground truncate text-xs font-medium">
+                  {firstName}
                 </div>
-              )}
+                {email && (
+                  <div className="text-muted-foreground truncate font-mono text-[10px]">
+                    {email}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="absolute inset-0 opacity-0 [&>*]:size-full [&_button]:size-full">
+              <UserButton />
             </div>
           </div>
-          <div className="absolute inset-0 opacity-0 [&>*]:size-full [&_button]:size-full">
-            <UserButton />
-          </div>
+          <ThemeToggle />
         </div>
 
-        <div className="flex items-center justify-between gap-1 px-1 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:px-0">
-          <div className="group-data-[collapsible=icon]:hidden" />
-          <div className="hidden group-data-[collapsible=icon]:block">
-            <UserButton />
-          </div>
+        <div className="hidden flex-col items-center gap-1 group-data-[collapsible=icon]:flex">
+          <UserButton />
           <ThemeToggle />
         </div>
       </SidebarFooter>

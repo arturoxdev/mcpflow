@@ -5,6 +5,7 @@ const BoardSchema = z.object({
     userId: z.string(),
     name: z.string(),
     description: z.string(),
+    publicInboxEnabled: z.boolean(),
     createdAt: z.string()
 })
 
@@ -18,11 +19,16 @@ const TaskSchema = z.object({
     description: z.string(),
     priority: z.enum(['low', 'medium', 'high']),
     status: z.enum(['todo', 'doing', 'done']),
+    source: z.enum(['internal', 'external']),
+    createdBy: z.string().nullable(),
     boardId: z.string(),
     pr: z.number()
 })
 
-const CreateTaskSchema = TaskSchema.omit({ id: true, pr: true })
+const CreateTaskSchema = TaskSchema.omit({ id: true, pr: true }).extend({
+    source: z.enum(['internal', 'external']).optional(),
+    createdBy: z.string().nullable().optional(),
+})
 
 export type CreateTask = z.infer<typeof CreateTaskSchema>
 export type Task = z.infer<typeof TaskSchema>

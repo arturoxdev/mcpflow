@@ -24,6 +24,8 @@ class TaskService {
       description: task.description,
       priority: task.priority,
       status: task.status,
+      source: task.source ?? 'internal',
+      createdBy: task.createdBy ?? null,
       boardId: task.boardId,
       userId: task.userId,
       pr,

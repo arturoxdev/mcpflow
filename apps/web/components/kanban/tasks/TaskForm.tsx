@@ -195,6 +195,18 @@ export function TaskForm({
           <span className="opacity-60">id</span>
           <span className="text-foreground">{idDisplay}</span>
         </span>
+        {isEdit && task && (
+          <span
+            className={cn(
+              "inline-flex items-center rounded-full border px-2 py-0.5 font-mono text-[10px] tracking-wide",
+              task.source === "external"
+                ? "border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-300"
+                : "border-border bg-muted/50 text-muted-foreground"
+            )}
+          >
+            {task.source === "external" ? "Externa" : "Interna"}
+          </span>
+        )}
         <span className="text-muted-foreground/70 font-mono text-[10px]">
           {idHelper}
         </span>
