@@ -1,6 +1,6 @@
 import { db, boards } from "./db";
 import { Board } from "./entities";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { ulid } from "ulid";
 
 class BoardService {
@@ -31,8 +31,11 @@ class BoardService {
     }));
   };
 
-  getById = async (id: string): Promise<Board | undefined> => {
-    const [board] = await db.select().from(boards).where(eq(boards.id, id));
+  getById = async (id: string, userId: string): Promise<Board | undefined> => {
+    const [board] = await db
+      .select()
+      .from(boards)
+      .where(and(eq(boards.id, id), eq(boards.userId, userId)));
     if (!board) {
       return undefined;
     }
@@ -42,11 +45,11 @@ class BoardService {
     };
   };
 
-  update = async (id: string, name: string, description?: string): Promise<Board> => {
+  update = async (id: string, userId: string, name: string, description?: string): Promise<Board> => {
     const [updated] = await db
       .update(boards)
       .set({ name, description: description || '' })
-      .where(eq(boards.id, id))
+      .where(and(eq(boards.id, id), eq(boards.userId, userId)))
       .returning();
 
     if (!updated) {
@@ -59,8 +62,11 @@ class BoardService {
     };
   };
 
-  delete = async (id: string): Promise<void> => {
-    const result = await db.delete(boards).where(eq(boards.id, id)).returning();
+  delete = async (id: string, userId: string): Promise<void> => {
+    const result = await db
+      .delete(boards)
+      .where(and(eq(boards.id, id), eq(boards.userId, userId)))
+      .returning();
     if (result.length === 0) {
       throw new Error('Board not found');
     }

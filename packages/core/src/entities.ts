@@ -28,3 +28,14 @@ export type CreateTask = z.infer<typeof CreateTaskSchema>
 export type Task = z.infer<typeof TaskSchema>
 export type Priority = Task['priority']
 export type Status = Task['status']
+
+const ApiKeySchema = z.object({
+    id: z.string(),
+    userId: z.string(),
+    name: z.string(),
+    prefix: z.string(),
+    lastUsedAt: z.string().nullable(),
+    createdAt: z.string(),
+})
+
+export type ApiKey = z.infer<typeof ApiKeySchema>
