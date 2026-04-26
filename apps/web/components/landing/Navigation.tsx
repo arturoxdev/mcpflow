@@ -5,7 +5,7 @@ export function Navigation() {
   return (
     <nav className="fixed top-0 right-0 left-0 z-[100] mx-auto flex w-4/5 items-center justify-between bg-gradient-to-b from-background to-transparent px-16 py-6 backdrop-blur-[10px]">
       <div className="font-serif text-[1.75rem] font-bold italic tracking-[-0.02em]">
-        MCP<span className="text-primary italic">Flow</span>
+        Zen<span className="text-primary italic">Board</span>
       </div>
 
       <div className="flex items-center gap-10">
@@ -27,7 +27,7 @@ export function Navigation() {
         >
           Precios
         </Link>
-        <Button render={<Link href="/boards" />} nativeButton={false} size="lg">
+        <Button render={<Link href="/general" />} nativeButton={false} size="lg">
           Comenzar gratis
         </Button>
       </div>

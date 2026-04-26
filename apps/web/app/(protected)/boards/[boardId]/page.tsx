@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
+import { toast } from "sonner"
 import { Board } from "@repo/core"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -15,6 +16,7 @@ import { useKanban } from "@/components/kanban/hooks/useKanban"
 import { COLUMNS } from "@/components/kanban/constants"
 import { useBreadcrumb } from "@/hooks/use-breadcrumb"
 import { usePageAction } from "@/hooks/use-page-action"
+import { boardsStore } from "@/lib/boards-store"
 
 interface BoardPageProps {
   params: Promise<{ boardId: string }>
@@ -102,9 +104,27 @@ export default function BoardPage({ params }: BoardPageProps) {
 
   const doneCount = tasks.filter((t) => t.status === "done").length
 
+  const handleRename = async (newName: string) => {
+    const res = await fetch(`/api/boards/${boardId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newName }),
+    })
+    if (!res.ok) throw new Error("Failed to rename")
+    const updated = (await res.json()) as Board
+    setBoard(updated)
+    boardsStore.notify()
+    toast.success("Nombre actualizado")
+  }
+
   return (
     <div className="flex h-full flex-col gap-8">
-      <BoardHeader name={board.name} done={doneCount} total={tasks.length} />
+      <BoardHeader
+        name={board.name}
+        done={doneCount}
+        total={tasks.length}
+        onRename={handleRename}
+      />
 
       {areTasksLoading ? (
         <div className="flex gap-6">

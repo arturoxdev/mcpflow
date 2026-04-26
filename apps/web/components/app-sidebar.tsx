@@ -26,6 +26,7 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { openCommandPalette } from "@/components/command-palette"
 import { boardsStore } from "@/lib/boards-store"
 import { tasksStore } from "@/lib/tasks-store"
 import { cn } from "@/lib/utils"
@@ -86,8 +87,19 @@ export function AppSidebar() {
         </Link>
 
         <div className="px-1 group-data-[collapsible=icon]:hidden">
-          <InputGroup>
-            <InputGroupInput placeholder="Buscar…" />
+          <InputGroup
+            onClick={openCommandPalette}
+            className="cursor-pointer"
+          >
+            <InputGroupInput
+              placeholder="Buscar…"
+              readOnly
+              onFocus={(e) => {
+                e.target.blur()
+                openCommandPalette()
+              }}
+              className="cursor-pointer"
+            />
             <InputGroupAddon align="inline-end">
               <kbd className="text-muted-foreground font-mono text-[10px]">
                 ⌘K
