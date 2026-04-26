@@ -1,35 +1,44 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { DndContext, DragEndEvent, DragOverlay } from '@dnd-kit/core'
-import { useKanban } from './hooks/useKanban'
-import { Column } from './Column'
-import { Card } from './Card'
-import { COLUMNS } from './constants'
-import { Status, Task } from '@repo/core'
+import { useState } from "react"
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core"
+import { Status, Task } from "@repo/core"
+
+import { Column } from "./Column"
+import { Card } from "./Card"
+import { COLUMNS } from "./constants"
 
 interface KanbanBoardProps {
+  tasks: Task[]
   boardId: string
-  boardName?: string
+  onMove: (taskId: string, newStatus: Status) => void
+  getTasksByStatus: (status: Status) => Task[]
 }
 
-export function KanbanBoard({ boardId, boardName }: KanbanBoardProps) {
-  const {
-    tasks,
-    isLoading,
-    error,
-    deleteTask,
-    moveTask,
-    getTasksByStatus,
-  } = useKanban({ boardId })
+export function KanbanBoard({
+  tasks,
+  boardId,
+  onMove,
+  getTasksByStatus,
+}: KanbanBoardProps) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  )
 
   const [activeTask, setActiveTask] = useState<Task | null>(null)
 
-  const handleDragStart = (event: { active: { data: { current?: { task?: Task } } } }) => {
+  const handleDragStart = (event: {
+    active: { data: { current?: { task?: Task } } }
+  }) => {
     const task = event.active.data.current?.task
-    if (task) {
-      setActiveTask(task)
-    }
+    if (task) setActiveTask(task)
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -43,51 +52,31 @@ export function KanbanBoard({ boardId, boardName }: KanbanBoardProps) {
 
     const task = tasks.find((t) => t.id === taskId)
     if (task && task.status !== newStatus) {
-      moveTask(taskId, newStatus)
+      onMove(taskId, newStatus)
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-400">Loading tasks...</div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-red-400">Error: {error}</div>
-      </div>
-    )
-  }
-
   return (
-    <div className="h-full">
-      {boardName && (
-        <h1 className="text-4xl italic font-bold text-white mb-6">{boardName}</h1>
-      )}
-      <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div className="flex gap-6 overflow-x-auto pb-4 overflow-x-auto">
-          {COLUMNS.map((column) => (
-            <Column
-              key={column.id}
-              id={column.id}
-              title={column.title}
-              dotColor={column.dotColor}
-              tasks={getTasksByStatus(column.id)}
-              boardId={boardId}
-              onDeleteTask={deleteTask}
-            />
-          ))}
-        </div>
-        <DragOverlay>
-          {activeTask ? (
-            <Card task={activeTask} boardId={boardId} onDelete={() => { }} />
-          ) : null}
-        </DragOverlay>
-      </DndContext>
-    </div>
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="flex gap-6 overflow-x-auto pb-4">
+        {COLUMNS.map((column) => (
+          <Column
+            key={column.id}
+            id={column.id}
+            title={column.title}
+            dotClass={column.dotClass}
+            tasks={getTasksByStatus(column.id)}
+            boardId={boardId}
+          />
+        ))}
+      </div>
+      <DragOverlay>
+        {activeTask ? <Card task={activeTask} boardId={boardId} /> : null}
+      </DragOverlay>
+    </DndContext>
   )
 }

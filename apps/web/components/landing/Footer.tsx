@@ -1,53 +1,40 @@
+import Link from "next/link"
+import { Separator } from "@/components/ui/separator"
+
+const links = [
+  { label: "Documentación", href: "#", external: false },
+  { label: "API", href: "#", external: false },
+  { label: "Blog", href: "#", external: false },
+  { label: "GitHub", href: "https://github.com", external: true },
+  { label: "Twitter", href: "https://twitter.com", external: true },
+]
+
 export function Footer() {
   return (
-    <footer className="border-t border-[var(--border-subtle)] px-16 py-16">
+    <footer className="px-16 py-16">
+      <Separator className="mb-16" />
       <div className="mx-auto flex max-w-[1200px] items-center justify-between">
-        {/* Logo */}
-        <div className="text-[1.5rem] font-normal" style={{ fontFamily: 'var(--font-instrument-serif)' }}>
-          Zen<span className="text-[var(--accent-indigo)]">Board</span>
+        <div className="font-serif text-[1.5rem] font-normal">
+          Zen<span className="text-primary">Board</span>
         </div>
 
-        {/* Links */}
         <div className="flex gap-8">
-          <a
-            href="#"
-            className="text-[0.9rem] text-[var(--text-muted)] transition-colors duration-200 hover:text-[var(--text-primary)]"
-          >
-            Documentación
-          </a>
-          <a
-            href="#"
-            className="text-[0.9rem] text-[var(--text-muted)] transition-colors duration-200 hover:text-[var(--text-primary)]"
-          >
-            API
-          </a>
-          <a
-            href="#"
-            className="text-[0.9rem] text-[var(--text-muted)] transition-colors duration-200 hover:text-[var(--text-primary)]"
-          >
-            Blog
-          </a>
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[0.9rem] text-[var(--text-muted)] transition-colors duration-200 hover:text-[var(--text-primary)]"
-          >
-            GitHub
-          </a>
-          <a
-            href="https://twitter.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[0.9rem] text-[var(--text-muted)] transition-colors duration-200 hover:text-[var(--text-primary)]"
-          >
-            Twitter
-          </a>
+          {links.map((link) => (
+            <Link
+              key={link.label}
+              href={link.href}
+              {...(link.external
+                ? { target: "_blank", rel: "noopener noreferrer" }
+                : {})}
+              className="text-muted-foreground hover:text-foreground text-[0.9rem] transition-colors duration-200"
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
 
-        {/* Copyright */}
-        <div className="text-[0.85rem] text-[var(--text-muted)]">
-          © 2025 ZenBoard. Hecho con ☕ y algo de zen.
+        <div className="text-muted-foreground text-[0.85rem]">
+          © 2025 ZenBoard. Hecho con café y algo de zen.
         </div>
       </div>
     </footer>

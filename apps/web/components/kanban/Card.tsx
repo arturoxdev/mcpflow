@@ -1,74 +1,52 @@
-'use client'
+"use client"
 
-import Link from 'next/link'
-import { useDraggable } from '@dnd-kit/core'
-import { Task } from '@repo/core'
-import { PriorityBadge } from './PriorityBadge'
-import { PRBadge } from './PRBadge'
+import Link from "next/link"
+import { useDraggable } from "@dnd-kit/core"
+import { Task } from "@repo/core"
+
+import { cn } from "@/lib/utils"
+import { PriorityGlyph } from "./PriorityGlyph"
 
 interface CardProps {
   task: Task
   boardId: string
-  onDelete: (taskId: string) => void
+  boardName?: string
 }
 
-export function Card({ task, boardId, onDelete }: CardProps) {
+export function Card({ task, boardId, boardName }: CardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: task.id,
       data: { task },
     })
 
-  const style: React.CSSProperties = {
-    backgroundColor: '#1c1c26',
-    border: '1px solid rgba(255,255,255,0.05)',
-    ...(transform
-      ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
-      : {}),
-  }
+  const style: React.CSSProperties = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+    : {}
+
+  const prPadded = String(task.pr).padStart(3, "0")
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...listeners}
-      {...attributes}
-      className={`
-        p-4 rounded-lg cursor-grab active:cursor-grabbing
-        transition-colors duration-200
-        ${isDragging ? 'opacity-50' : ''}
-      `}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = '#23232f'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = '#1c1c26'
-      }}
-    >
-      <div className="flex items-start justify-between gap-2 mb-2">
+    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+      <div
+        className={cn(
+          "bg-card border-border hover:border-ring focus-within:border-ring relative cursor-grab rounded-lg border p-3 transition-colors active:cursor-grabbing",
+          isDragging && "opacity-50"
+        )}
+      >
         <Link
           href={`/boards/${boardId}/tasks/${task.id}`}
-          onClick={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
-          className="font-medium text-sm text-white flex-1 hover:text-indigo-400 transition-colors"
+          className="hover:text-primary block rounded-sm text-sm leading-tight font-medium outline-none transition-colors before:absolute before:inset-0 before:content-[''] focus-visible:ring-2 focus-visible:ring-ring/50"
         >
           {task.title}
         </Link>
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            onDelete(task.id)
-          }}
-          onPointerDown={(e) => e.stopPropagation()}
-          className="text-gray-500 hover:text-red-400 transition-colors text-sm"
-          title="Delete task"
-        >
-          ×
-        </button>
-      </div>
-      <div className="flex items-center gap-2">
-        <PriorityBadge priority={task.priority} />
-        <PRBadge pr={task.pr} />
+
+        <div className="text-muted-foreground mt-2 flex items-center gap-2 text-xs">
+          <PriorityGlyph priority={task.priority} />
+          {boardName && <span className="truncate">{boardName}</span>}
+          <span className="bg-border h-2.5 w-px" />
+          <span className="font-mono">#PR-{prPadded}</span>
+        </div>
       </div>
     </div>
   )

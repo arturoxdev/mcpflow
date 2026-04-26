@@ -37,6 +37,10 @@ class TaskService {
     return db.select().from(tasks).where(eq(tasks.boardId, boardId));
   };
 
+  getAllByUser = async (userId: string): Promise<Task[]> => {
+    return db.select().from(tasks).where(eq(tasks.userId, userId));
+  };
+
   getById = async (id: string, boardId: string): Promise<Task | undefined> => {
     const [task] = await db
       .select()
