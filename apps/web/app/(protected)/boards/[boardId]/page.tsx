@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { BoardHeader } from "@/components/board/BoardHeader"
 import { BoardList } from "@/components/board/BoardList"
+import { SharePublicInboxPopover } from "@/components/board/SharePublicInboxPopover"
 import { KanbanBoard } from "@/components/kanban"
 import { useKanban } from "@/components/kanban/hooks/useKanban"
 import { COLUMNS } from "@/components/kanban/constants"
@@ -124,6 +125,17 @@ export default function BoardPage({ params }: BoardPageProps) {
         done={doneCount}
         total={tasks.length}
         onRename={handleRename}
+        action={
+          <SharePublicInboxPopover
+            boardId={boardId}
+            initialEnabled={board.publicInboxEnabled}
+            onChange={(next) =>
+              setBoard((current) =>
+                current ? { ...current, publicInboxEnabled: next } : current
+              )
+            }
+          />
+        }
       />
 
       {areTasksLoading ? (

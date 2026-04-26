@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { BrandMark } from "@/components/brand-mark"
 import { Separator } from "@/components/ui/separator"
 
 const links = [
@@ -14,8 +15,11 @@ export function Footer() {
     <footer className="px-16 py-16">
       <Separator className="mb-16" />
       <div className="mx-auto flex max-w-[1200px] items-center justify-between">
-        <div className="font-serif text-[1.5rem] font-normal">
-          Zen<span className="text-primary">Board</span>
+        <div className="flex items-center gap-2 font-serif text-[1.5rem] font-normal">
+          <BrandMark className="size-6" />
+          <span>
+            Zen<span className="text-primary">Board</span>
+          </span>
         </div>
 
         <div className="flex gap-8">

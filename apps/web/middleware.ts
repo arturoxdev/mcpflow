@@ -1,6 +1,11 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
-const isPublicRoute = createRouteMatcher(['/', '/sign-in(.*)', '/sign-up(.*)'])
+const isPublicRoute = createRouteMatcher([
+  '/',
+  '/sign-in(.*)',
+  '/sign-up(.*)',
+  '/public/boards/(.*)',
+])
 
 // Rutas API que aceptan Clerk session/JWT o API key (zb_pat_).
 // El middleware NO las protege: cada handler corre getAuth(request) y decide.
@@ -8,6 +13,7 @@ const isProgrammaticApi = createRouteMatcher([
   '/api/boards',
   '/api/boards/(.*)',
   '/api/tasks',
+  '/api/public/(.*)',
 ])
 
 export default clerkMiddleware(async (auth, req) => {

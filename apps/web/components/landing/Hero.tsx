@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { BrandMark } from "@/components/brand-mark"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
@@ -21,6 +22,12 @@ export function Hero() {
       />
 
       <div className="relative z-10 flex flex-col items-center gap-8">
+        <div
+          className="flex justify-center"
+          style={{ animation: "fadeInUp 0.8s ease forwards", opacity: 0 }}
+        >
+          <BrandMark className="size-20" />
+        </div>
         <Badge
           variant="outline"
           className="animate-[fadeInUp_0.8s_ease_forwards] gap-2 rounded-full px-4 py-2"

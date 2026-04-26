@@ -36,17 +36,25 @@ export async function PATCH(
   }
 
   const body = await request.json().catch(() => ({}))
-  const rawName = typeof body?.name === "string" ? body.name.trim() : ""
-  if (!rawName) {
-    return NextResponse.json({ error: 'name is required' }, { status: 400 })
+  const patch: { name?: string; publicInboxEnabled?: boolean } = {}
+
+  if (typeof body?.name === "string") {
+    const trimmed = body.name.trim()
+    if (!trimmed) {
+      return NextResponse.json({ error: 'name cannot be empty' }, { status: 400 })
+    }
+    patch.name = trimmed
   }
 
-  const updated = await boardService.update(
-    boardId,
-    session.userId,
-    rawName,
-    board.description
-  )
+  if (typeof body?.publicInboxEnabled === "boolean") {
+    patch.publicInboxEnabled = body.publicInboxEnabled
+  }
+
+  if (Object.keys(patch).length === 0) {
+    return NextResponse.json({ error: 'no fields to update' }, { status: 400 })
+  }
+
+  const updated = await boardService.update(boardId, session.userId, patch)
   return NextResponse.json(updated)
 }
 

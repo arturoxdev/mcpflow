@@ -3,6 +3,12 @@ import { Board } from "./entities";
 import { and, eq } from "drizzle-orm";
 import { ulid } from "ulid";
 
+type BoardUpdate = {
+  name?: string;
+  description?: string;
+  publicInboxEnabled?: boolean;
+};
+
 class BoardService {
   constructor() { }
 
@@ -45,10 +51,35 @@ class BoardService {
     };
   };
 
-  update = async (id: string, userId: string, name: string, description?: string): Promise<Board> => {
+  getByIdPublic = async (id: string): Promise<Board | undefined> => {
+    const [board] = await db
+      .select()
+      .from(boards)
+      .where(eq(boards.id, id));
+    if (!board) {
+      return undefined;
+    }
+    return {
+      ...board,
+      createdAt: board.createdAt.toISOString(),
+    };
+  };
+
+  update = async (id: string, userId: string, patch: BoardUpdate): Promise<Board> => {
+    const setPayload: Record<string, unknown> = {};
+    if (typeof patch.name === "string") setPayload.name = patch.name;
+    if (typeof patch.description === "string") setPayload.description = patch.description;
+    if (typeof patch.publicInboxEnabled === "boolean") setPayload.publicInboxEnabled = patch.publicInboxEnabled;
+
+    if (Object.keys(setPayload).length === 0) {
+      const current = await this.getById(id, userId);
+      if (!current) throw new Error('Board not found');
+      return current;
+    }
+
     const [updated] = await db
       .update(boards)
-      .set({ name, description: description || '' })
+      .set(setPayload)
       .where(and(eq(boards.id, id), eq(boards.userId, userId)))
       .returning();
 

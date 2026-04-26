@@ -20,6 +20,7 @@ interface Props {
   done: number
   total: number
   onRename?: (newName: string) => Promise<void>
+  action?: React.ReactNode
 }
 
 function getGreeting(): string {
@@ -29,7 +30,7 @@ function getGreeting(): string {
   return "Buenas noches"
 }
 
-export function BoardHeader({ name, done, total, onRename }: Props) {
+export function BoardHeader({ name, done, total, onRename, action }: Props) {
   const { user } = useUser()
   const firstName = user?.firstName ?? ""
   const filled = total === 0 ? 0 : Math.round((done / total) * 10)
@@ -60,7 +61,7 @@ export function BoardHeader({ name, done, total, onRename }: Props) {
   }
 
   return (
-    <div className="flex flex-wrap items-end justify-between gap-6">
+    <div className="flex flex-wrap items-stretch justify-between gap-6">
       <div>
         <div className="text-muted-foreground mb-2 text-xs uppercase tracking-wider">
           {getGreeting()}
@@ -129,19 +130,22 @@ export function BoardHeader({ name, done, total, onRename }: Props) {
         </div>
       </div>
 
-      <div className="text-muted-foreground flex items-center gap-3 text-xs">
-        <div className="flex gap-1">
-          {Array.from({ length: 10 }).map((_, i) => (
-            <span
-              key={i}
-              className={cn(
-                "h-1 w-3.5 rounded-full transition-colors",
-                i < filled ? "bg-accent" : "bg-muted"
-              )}
-            />
-          ))}
+      <div className="flex flex-col items-end justify-between gap-4">
+        <div>{action}</div>
+        <div className="text-muted-foreground flex items-center gap-3 text-xs">
+          <div className="flex gap-1">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <span
+                key={i}
+                className={cn(
+                  "h-1 w-3.5 rounded-full transition-colors",
+                  i < filled ? "bg-accent" : "bg-muted"
+                )}
+              />
+            ))}
+          </div>
+          <span className="font-mono">{pct}%</span>
         </div>
-        <span className="font-mono">{pct}%</span>
       </div>
     </div>
   )
