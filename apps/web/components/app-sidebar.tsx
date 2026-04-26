@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAuth, useUser, UserButton } from "@clerk/nextjs"
+import { BookOpen, KeyRound } from "lucide-react"
 import type { Board, Task } from "@repo/core"
 
 import {
@@ -156,6 +157,33 @@ export function AppSidebar() {
                       </SidebarMenuItem>
                     )
                   })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup className="mt-auto">
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={pathname === "/api-keys"}
+                  tooltip="API Keys"
+                  render={<Link href="/api-keys" />}
+                >
+                  <KeyRound className="size-4" />
+                  <span>API Keys</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={pathname === "/api-docs"}
+                  tooltip="API Docs"
+                  render={<Link href="/api-docs" />}
+                >
+                  <BookOpen className="size-4" />
+                  <span>API Docs</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

@@ -15,6 +15,13 @@
       "when": 1768933840320,
       "tag": "0001_moaning_red_hulk",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777162901214,
+      "tag": "0002_gigantic_cardiac",
+      "breakpoints": true
     }
   ]
 }
