@@ -1,157 +1,367 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { Priority } from '@repo/core'
-import { MarkdownEditor } from './MarkdownEditor'
-import { PrioritySelect } from './PrioritySelect'
+import { useState } from "react"
+import { Controller, useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { toast } from "sonner"
+import { Trash2 } from "lucide-react"
+import type { Board, Task } from "@repo/core"
+
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Spinner } from "@/components/ui/spinner"
+import { cn } from "@/lib/utils"
+import { taskFormSchema, type TaskFormValues } from "@/lib/schemas/task"
+import { MarkdownEditor } from "./MarkdownEditor"
+import { PriorityPicker } from "./PriorityPicker"
+
+type TaskFormMode = "create" | "edit"
 
 interface TaskFormProps {
-  boardId: string
-  onSuccess: () => void
+  mode: TaskFormMode
+  initialBoardId?: string
+  boards: Board[]
+  task?: Task
+  onSuccess: (boardId: string) => void
   onCancel: () => void
+  onTitleChange?: (title: string) => void
+  onBoardChange?: (boardId: string) => void
+  onDelete?: () => Promise<void> | void
 }
 
-interface FormErrors {
-  title?: string
-  priority?: string
-}
-
-const MAX_TITLE_LENGTH = 120
-
-export function TaskForm({ boardId, onSuccess, onCancel }: TaskFormProps) {
-  const [title, setTitle] = useState('')
-  const [priority, setPriority] = useState<Priority | ''>('')
-  const [description, setDescription] = useState('')
-  const [errors, setErrors] = useState<FormErrors>({})
+export function TaskForm({
+  mode,
+  initialBoardId,
+  boards,
+  task,
+  onSuccess,
+  onCancel,
+  onTitleChange,
+  onBoardChange,
+  onDelete,
+}: TaskFormProps) {
+  const isEdit = mode === "edit"
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [selectedBoardId, setSelectedBoardId] = useState<string | undefined>(
+    initialBoardId ?? task?.boardId
+  )
+  const [descriptionMode, setDescriptionMode] = useState<"edit" | "view">(
+    "edit"
+  )
 
-  const validate = (): boolean => {
-    const newErrors: FormErrors = {}
+  const form = useForm<TaskFormValues>({
+    resolver: zodResolver(taskFormSchema),
+    defaultValues: task
+      ? {
+          title: task.title,
+          priority: task.priority,
+          description: task.description ?? "",
+        }
+      : { title: "", priority: undefined, description: "" },
+  })
 
-    if (!title.trim()) {
-      newErrors.title = 'El título es obligatorio'
-    } else if (title.length > MAX_TITLE_LENGTH) {
-      newErrors.title = `El título no puede exceder ${MAX_TITLE_LENGTH} caracteres`
+  const isDirty = form.formState.isDirty
+
+  const onSubmit = async (values: TaskFormValues) => {
+    if (!selectedBoardId) {
+      toast.error("Seleccioná un board para guardar la tarea")
+      return
     }
-
-    if (!priority) {
-      newErrors.priority = 'Selecciona una prioridad'
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!validate()) return
-
     setIsSubmitting(true)
     try {
-      const response = await fetch(`/api/boards/${boardId}/tasks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: title.trim(),
-          description: description.trim(),
-          priority,
-          status: 'todo',
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to create task')
+      let response: Response
+      if (isEdit && task) {
+        response = await fetch(
+          `/api/boards/${task.boardId}/tasks/${task.id}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              title: values.title.trim(),
+              description: values.description.trim(),
+              priority: values.priority,
+              status: task.status,
+            }),
+          }
+        )
+      } else {
+        response = await fetch(`/api/boards/${selectedBoardId}/tasks`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: values.title.trim(),
+            description: values.description.trim(),
+            priority: values.priority,
+            status: "todo",
+          }),
+        })
       }
 
-      onSuccess()
+      if (!response.ok) throw new Error("Failed to save task")
+      toast.success(isEdit ? "Cambios guardados" : "Tarea creada")
+      form.reset(values)
+      onSuccess(selectedBoardId)
     } catch (error) {
-      console.error('Error creating task:', error)
-      setErrors({ title: 'Error al crear la tarea. Intenta de nuevo.' })
+      console.error("Error saving task:", error)
+      toast.error(
+        isEdit
+          ? "Error al guardar los cambios. Intenta de nuevo."
+          : "Error al crear la tarea. Intenta de nuevo."
+      )
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const titleLength = title.length
-  const isOverLimit = titleLength > MAX_TITLE_LENGTH
+  const handleDelete = async () => {
+    if (!onDelete) return
+    setIsDeleting(true)
+    try {
+      await onDelete()
+      setShowDeleteDialog(false)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const idDisplay =
+    isEdit && task
+      ? `#PR-${String(task.pr).padStart(3, "0")}`
+      : "#PR-—"
+  const idHelper = isEdit ? "auto · solo lectura" : "se generará al guardar"
+
+  const footerStatus = isEdit
+    ? isSubmitting
+      ? "guardando…"
+      : isDirty
+        ? "sin guardar"
+        : "guardado"
+    : "sin guardar"
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
-          Título <span className="text-red-400">*</span>
-        </label>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full px-4 py-2.5 rounded-lg text-white text-sm transition-colors focus:outline-none"
-          style={{
-            backgroundColor: '#1c1c26',
-            border: errors.title ? '1px solid #f87171' : '1px solid rgba(255,255,255,0.1)',
+    <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col">
+      <div className="mb-5 flex flex-wrap items-center gap-2.5">
+        <span className="bg-muted/50 border-border text-muted-foreground inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[10px] tracking-wide">
+          <span className="opacity-60">id</span>
+          <span className="text-foreground">{idDisplay}</span>
+        </span>
+        <span className="text-muted-foreground/70 font-mono text-[10px]">
+          {idHelper}
+        </span>
+
+        <span className="bg-border mx-1 h-3.5 w-px" />
+
+        <span className="text-muted-foreground/70 font-mono text-[10px]">
+          proyecto
+        </span>
+        <Select
+          items={boards.map((b) => ({ value: b.id, label: b.name }))}
+          value={selectedBoardId ?? null}
+          onValueChange={(v) => {
+            if (!v || isEdit) return
+            setSelectedBoardId(v)
+            onBoardChange?.(v)
           }}
-          onFocus={(e) => {
-            e.currentTarget.style.borderColor = errors.title ? '#f87171' : '#6366f1'
-          }}
-          onBlur={(e) => {
-            e.currentTarget.style.borderColor = errors.title ? '#f87171' : 'rgba(255,255,255,0.1)'
-          }}
-          placeholder="Escribe el título de la tarea..."
-          autoFocus
-        />
-        <div className="flex justify-between items-center mt-1.5">
-          {errors.title ? (
-            <p className="text-sm text-red-400">{errors.title}</p>
-          ) : (
-            <span />
-          )}
-          <span
-            className={`text-sm ${isOverLimit ? 'text-red-400' : 'text-gray-500'}`}
+          disabled={isEdit}
+        >
+          <SelectTrigger size="sm" className="w-auto min-w-40">
+            <SelectValue placeholder="Seleccionar board" />
+          </SelectTrigger>
+          <SelectContent>
+            {boards.map((b) => (
+              <SelectItem key={b.id} value={b.id}>
+                {b.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Controller
+        control={form.control}
+        name="title"
+        render={({ field, fieldState }) => (
+          <div className="mb-6">
+            <input
+              type="text"
+              autoFocus
+              placeholder="Título de la tarea"
+              className={cn(
+                "text-foreground placeholder:text-muted-foreground/50 w-full border-none bg-transparent p-0 text-3xl font-medium leading-tight tracking-tight outline-none",
+                fieldState.error && "text-destructive"
+              )}
+              {...field}
+              onChange={(e) => {
+                field.onChange(e)
+                onTitleChange?.(e.target.value)
+              }}
+            />
+            {fieldState.error && (
+              <p className="text-destructive mt-1 text-xs">
+                {fieldState.error.message}
+              </p>
+            )}
+          </div>
+        )}
+      />
+
+      <Controller
+        control={form.control}
+        name="priority"
+        render={({ field, fieldState }) => (
+          <div className="mb-9 flex flex-wrap items-center gap-4">
+            <span className="text-muted-foreground/70 min-w-[90px] text-[11px] uppercase tracking-[0.16em]">
+              Prioridad
+            </span>
+            <PriorityPicker
+              value={field.value}
+              onChange={field.onChange}
+              invalid={!!fieldState.error}
+            />
+            {fieldState.error && (
+              <p className="text-destructive text-xs">
+                {fieldState.error.message}
+              </p>
+            )}
+          </div>
+        )}
+      />
+
+      <Controller
+        control={form.control}
+        name="description"
+        render={({ field }) => (
+          <div className="flex flex-col">
+            <div className="text-muted-foreground/70 mb-3.5 flex flex-wrap items-center gap-2.5 text-[11px] uppercase tracking-[0.16em]">
+              <span>Descripción</span>
+              <span className="text-accent bg-accent/10 rounded font-mono text-[9.5px] tracking-wide px-1.5 py-0.5 normal-case">
+                md
+              </span>
+              <div className="border-border ml-auto flex gap-1 rounded-md border p-0.5">
+                {(["edit", "view"] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setDescriptionMode(m)}
+                    className={cn(
+                      "rounded px-2.5 py-0.5 text-[10px] uppercase tracking-wider transition-colors",
+                      descriptionMode === m
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {m === "edit" ? "Editar" : "Vista"}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <MarkdownEditor
+              value={field.value ?? ""}
+              onChange={field.onChange}
+              mode={descriptionMode}
+              placeholder={
+                "Escribe en markdown…\n\n## Encabezado\n- viñeta\n**negrita** *cursiva* `código`"
+              }
+            />
+            <p className="text-muted-foreground/60 mt-2.5 font-mono text-[11px]">
+              **negrita** *cursiva* `código` # encabezado - lista &gt; cita
+            </p>
+          </div>
+        )}
+      />
+
+      <div className="border-border mt-10 flex flex-wrap items-center gap-3 border-t pt-5">
+        {onDelete && (
+          <Dialog
+            open={showDeleteDialog}
+            onOpenChange={setShowDeleteDialog}
           >
-            {titleLength}/{MAX_TITLE_LENGTH}
-          </span>
+            <DialogTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Eliminar tarea"
+                  disabled={isSubmitting || isDeleting}
+                  className="text-muted-foreground hover:text-destructive"
+                >
+                  <Trash2 />
+                </Button>
+              }
+            />
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Eliminar tarea</DialogTitle>
+                <DialogDescription>
+                  ¿Estás seguro de que quieres eliminar &quot;
+                  {task?.title ?? "esta tarea"}&quot;? Esta acción no se puede
+                  deshacer.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowDeleteDialog(false)}
+                  disabled={isDeleting}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                >
+                  {isDeleting && <Spinner data-icon="inline-start" />}
+                  Eliminar
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+        <span className="text-muted-foreground/70 font-mono text-[11px]">
+          {footerStatus}
+        </span>
+        <div className="ml-auto flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            disabled={
+              isSubmitting || !selectedBoardId || (isEdit && !isDirty)
+            }
+          >
+            {isSubmitting && <Spinner data-icon="inline-start" />}
+            {isSubmitting
+              ? "Guardando..."
+              : isEdit
+                ? "Guardar cambios"
+                : "Guardar tarea"}
+          </Button>
         </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
-          Prioridad <span className="text-red-400">*</span>
-        </label>
-        <PrioritySelect
-          value={priority}
-          onChange={setPriority}
-          error={errors.priority}
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
-          Descripción <span className="text-gray-500">(opcional)</span>
-        </label>
-        <MarkdownEditor
-          value={description}
-          onChange={setDescription}
-          placeholder="Escribe la descripción en markdown..."
-        />
-      </div>
-
-      <div className="flex justify-end gap-3 pt-4">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-5 py-2.5 rounded-lg text-sm text-gray-400 hover:text-white transition-colors"
-          disabled={isSubmitting}
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="px-5 py-2.5 rounded-lg text-sm text-white bg-indigo-600 hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting ? 'Creando...' : 'Crear Tarea'}
-        </button>
       </div>
     </form>
   )

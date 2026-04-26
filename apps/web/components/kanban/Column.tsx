@@ -1,63 +1,88 @@
-'use client'
+"use client"
 
-import Link from 'next/link'
-import { useDroppable } from '@dnd-kit/core'
-import { Task, Status } from '@repo/core'
-import { Card } from './Card'
+import Link from "next/link"
+import { Plus } from "lucide-react"
+import { useDroppable } from "@dnd-kit/core"
+import { Task, Status } from "@repo/core"
+
+import { cn } from "@/lib/utils"
+import { Card } from "./Card"
 
 interface ColumnProps {
   id: Status
   title: string
-  dotColor: string
+  dotClass: string
   tasks: Task[]
   boardId: string
-  onDeleteTask: (taskId: string) => void
+  boardNameById?: Map<string, string>
+  hideAddTask?: boolean
 }
 
 export function Column({
   id,
   title,
-  dotColor,
+  dotClass,
   tasks,
   boardId,
-  onDeleteTask,
+  boardNameById,
+  hideAddTask = false,
 }: ColumnProps) {
-  const { setNodeRef, isOver } = useDroppable({
-    id,
-  })
+  const { setNodeRef, isOver } = useDroppable({ id })
+  const count = String(tasks.length).padStart(2, "0")
+  const newTaskHref = boardId
+    ? `/boards/tasks/new?boardId=${boardId}`
+    : null
 
   return (
-    <div
-      className="flex flex-col rounded-xl w-1/3"
-      style={{
-        backgroundColor: '#16161e',
-        border: '1px solid rgba(255,255,255,0.03)',
-      }}
-    >
-      <div className="p-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className={`w-2 h-2 rounded-full ${dotColor}`} />
-          <h3 className="font-semibold text-white">{title}</h3>
-          <span className="text-xs text-gray-500 ml-1">({tasks.length})</span>
-        </div>
+    <div className="flex min-w-0 flex-1 flex-col gap-3">
+      <div className="flex items-center gap-2 px-1">
+        <span className={cn("size-1.5 rounded-full", dotClass)} />
+        <span className="text-foreground text-sm lowercase tracking-wide">
+          {title}
+        </span>
+        <span className="text-muted-foreground font-mono text-xs">{count}</span>
+        {newTaskHref && !hideAddTask && (
+          <Link
+            href={newTaskHref}
+            aria-label={`Añadir tarea en ${title}`}
+            className="text-muted-foreground hover:text-foreground ml-auto rounded-sm p-1 transition-colors"
+          >
+            <Plus className="size-4" />
+          </Link>
+        )}
       </div>
+
       <div
         ref={setNodeRef}
-        className={`
-          flex-1 p-2 flex flex-col gap-3 min-h-[200px]
-          transition-colors duration-200
-          ${isOver ? 'bg-white/5' : ''}
-        `}
+        className={cn(
+          "flex min-h-[200px] flex-1 flex-col gap-2.5 rounded-lg p-1 transition-colors duration-200",
+          isOver && "bg-accent/20"
+        )}
       >
-        {tasks.map((task) => (
-          <Card key={task.id} task={task} boardId={boardId} onDelete={onDeleteTask} />
-        ))}
-        {id === 'todo' && (
+        {tasks.length === 0 ? (
+          <div className="border-border flex flex-col items-center justify-center gap-1 rounded-lg border border-dashed p-6 text-center">
+            <p className="text-muted-foreground text-sm">Todo en calma</p>
+            <p className="text-muted-foreground/60 font-mono text-xs">
+              no hay tareas aquí
+            </p>
+          </div>
+        ) : (
+          tasks.map((task) => (
+            <Card
+              key={task.id}
+              task={task}
+              boardId={task.boardId}
+              boardName={boardNameById?.get(task.boardId)}
+            />
+          ))
+        )}
+        {tasks.length > 0 && newTaskHref && !hideAddTask && (
           <Link
-            href={`/boards/${boardId}/tasks/new`}
-            className="w-full mt-auto p-3 border border-dashed border-gray-700 rounded-lg text-gray-500 text-sm hover:border-gray-500 hover:text-gray-300 transition-colors text-center block"
+            href={newTaskHref}
+            className="border-border text-muted-foreground hover:border-ring hover:text-foreground mt-auto flex w-full items-center justify-center gap-2 rounded-lg border border-dashed p-2.5 text-xs transition-colors"
           >
-            + Añadir Task
+            <Plus className="size-3.5" />
+            Añadir tarea
           </Link>
         )}
       </div>

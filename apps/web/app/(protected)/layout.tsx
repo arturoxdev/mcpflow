@@ -1,25 +1,39 @@
-import { UserButton } from '@clerk/nextjs'
+import { cookies } from "next/headers"
 
-export default function ProtectedLayout({
+import { AppSidebar } from "@/components/app-sidebar"
+import { KeyboardShortcuts } from "@/components/keyboard-shortcuts"
+import { PageBreadcrumb } from "@/components/page-breadcrumb"
+import { TopBarActions } from "@/components/top-bar-actions"
+import { Separator } from "@/components/ui/separator"
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
+
+export default async function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  return (
-    <div className="min-h-screen" style={{ backgroundColor: '#0d0d12' }}>
-      <header
-        className="border-b px-6 py-4"
-        style={{ borderColor: 'rgba(255,255,255,0.05)' }}
-      >
-        <nav className="flex items-center justify-between max-w-7xl mx-auto italic">
-          <a href="/boards" className="text-[1.75rem] font-bold tracking-[-0.02em]" style={{ fontFamily: 'var(--font-instrument-serif)' }}>
-            MCP<span className="italic text-[var(--accent-indigo)] ">Flow</span>
-          </a>
+  const cookieStore = await cookies()
+  const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false"
 
-          <UserButton />
-        </nav>
-      </header>
-      <main className="py-6 max-w-7xl mx-auto">{children}</main>
-    </div>
+  return (
+    <SidebarProvider defaultOpen={defaultOpen}>
+      <KeyboardShortcuts />
+      <AppSidebar />
+      <SidebarInset>
+        <header className="bg-background sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b px-4">
+          <div className="flex flex-1 items-center gap-2">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" />
+            <PageBreadcrumb />
+          </div>
+          <TopBarActions />
+        </header>
+        <main className="flex-1 px-6 py-6">{children}</main>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }

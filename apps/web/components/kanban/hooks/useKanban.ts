@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Task, Status, Priority } from '@repo/core'
 
+import { tasksStore } from '@/lib/tasks-store'
+
 interface UseKanbanOptions {
   boardId: string
 }
@@ -47,6 +49,7 @@ export function useKanban({ boardId }: UseKanbanOptions) {
         if (!response.ok) throw new Error('Failed to create task')
         const newTask = await response.json()
         setTasks((prev) => [...prev, newTask])
+        tasksStore.notify()
         return newTask
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error')
@@ -59,7 +62,6 @@ export function useKanban({ boardId }: UseKanbanOptions) {
   const updateTask = useCallback(
     async (taskId: string, updates: Partial<Task>) => {
       try {
-        console.log(updates, "holaaaaaaaa")
         const response = await fetch(
           `/api/boards/${boardId}/tasks/${taskId}`,
           {
@@ -73,6 +75,7 @@ export function useKanban({ boardId }: UseKanbanOptions) {
         setTasks((prev) =>
           prev.map((t) => (t.id === taskId ? updatedTask : t))
         )
+        tasksStore.notify()
         return updatedTask
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error')
@@ -93,6 +96,7 @@ export function useKanban({ boardId }: UseKanbanOptions) {
         )
         if (!response.ok) throw new Error('Failed to delete task')
         setTasks((prev) => prev.filter((t) => t.id !== taskId))
+        tasksStore.notify()
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error')
         throw err

@@ -1,22 +1,22 @@
-import { Priority } from '@repo/core'
-import { PRIORITY_STYLES } from './constants'
+import { Priority } from "@repo/core"
+import { Badge } from "@/components/ui/badge"
 
 interface PriorityBadgeProps {
   priority: Priority
 }
 
-export function PriorityBadge({ priority }: PriorityBadgeProps) {
-  const styles = PRIORITY_STYLES[priority]
+const VARIANT: Record<Priority, React.ComponentProps<typeof Badge>["variant"]> = {
+  high: "destructive",
+  medium: "outline",
+  low: "secondary",
+}
 
-  return (
-    <span
-      className="px-2 py-0.5 rounded text-xs font-medium capitalize"
-      style={{
-        backgroundColor: styles.bg,
-        color: styles.text,
-      }}
-    >
-      {priority}
-    </span>
-  )
+const LABEL: Record<Priority, string> = {
+  high: "Alta",
+  medium: "Media",
+  low: "Baja",
+}
+
+export function PriorityBadge({ priority }: PriorityBadgeProps) {
+  return <Badge variant={VARIANT[priority]}>{LABEL[priority]}</Badge>
 }

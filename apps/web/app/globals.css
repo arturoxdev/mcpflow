@@ -1,78 +1,250 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  --bg-primary: #0d0d12;
-  --bg-secondary: #16161e;
-  --bg-card: #1c1c26;
-  --bg-card-hover: #23232f;
-  --text-primary: #e2e2e6;
-  --text-secondary: #9494a5;
-  --text-muted: #6b6b7a;
-  --border-subtle: rgba(255, 255, 255, 0.05);
-  --border-hover: rgba(255, 255, 255, 0.15);
-  --accent-indigo: #7c7cfc;
-  --accent-indigo-glow: rgba(124, 124, 252, 0.15);
-  --priority-low: #6b7280;
-  --priority-medium: #eab308;
-  --priority-high: #ef4444;
-  --status-todo: #ef4444;
-  --status-doing: #eab308;
-  --status-done: #22c55e;
+  /* ── Snow Storm (light surfaces) ───────────────────────────── */
+  --background: rgb(243, 245, 248);
+  --foreground: rgb(46, 52, 64);
+  --card: rgb(255, 255, 255);
+  --card-foreground: rgb(46, 52, 64);
+  --popover: rgb(255, 255, 255);
+  --popover-foreground: rgb(46, 52, 64);
+
+  /* ── Frost (cool accent — cyan by default) ────────────────── */
+  --primary: rgb(136, 192, 208);          /* frost-1 cyan */
+  --primary-foreground: rgb(14, 19, 27);
+  --secondary: rgb(233, 237, 242);
+  --secondary-foreground: rgb(46, 52, 64);
+  --muted: rgb(221, 227, 235);
+  --muted-foreground: rgb(108, 118, 134);
+  --accent: rgb(143, 188, 187);           /* frost-4 aqua — pairs with primary */
+  --accent-foreground: rgb(14, 19, 27);
+
+  /* ── Aurora red (used VERY sparingly for destructive) ─────── */
+  --destructive: rgb(191, 97, 106);
+  --destructive-foreground: rgb(255, 255, 255);
+
+  --border: rgb(221, 227, 235);
+  --input: rgb(221, 227, 235);
+  --ring: rgb(136, 192, 208);
+
+  /* ── Charts: frost + aurora (cool-leaning) ────────────────── */
+  --chart-1: rgb(136, 192, 208);  /* frost-1 cyan */
+  --chart-2: rgb(129, 161, 193);  /* frost-2 blue */
+  --chart-3: rgb(94, 129, 172);   /* frost-3 deep blue */
+  --chart-4: rgb(143, 188, 187);  /* frost-4 aqua */
+  --chart-5: rgb(180, 142, 173);  /* aurora purple */
+
+  /* ── Sidebar (light) ──────────────────────────────────────── */
+  --sidebar: rgb(255, 255, 255);
+  --sidebar-foreground: rgb(46, 52, 64);
+  --sidebar-primary: rgb(46, 52, 64);
+  --sidebar-primary-foreground: rgb(255, 255, 255);
+  --sidebar-accent: rgb(233, 237, 242);
+  --sidebar-accent-foreground: rgb(46, 52, 64);
+  --sidebar-border: rgb(221, 227, 235);
+  --sidebar-ring: rgb(136, 192, 208);
+
+  /* ── Status tones (To Do / Doing / Done — todos frost) ────── */
+  --status-todo:  rgb(94, 129, 172);   /* frost-3 deep blue */
+  --status-doing: rgb(136, 192, 208);  /* frost-1 cyan */
+  --status-done:  rgb(143, 188, 187);  /* frost-4 aqua */
+
+  /* ── Priority glyph colors ────────────────────────────────── */
+  --priority-low:  rgb(154, 163, 178);
+  --priority-med:  rgb(94, 129, 172);
+  --priority-high: rgb(184, 107, 83);
+
+  /* ── Typography (Geist pairing) ───────────────────────────── */
+  --font-sans:  var(--font-geist-sans), ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-serif: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono:  var(--font-geist-mono), ui-monospace, "JetBrains Mono", "SF Mono", monospace;
+
+  /* ── Shape: soft, zen radii ───────────────────────────────── */
+  --radius: 0.625rem; /* 10px base — softer than shadcn default */
+
+  /* ── Shadows: almost nothing, separation by tone ──────────── */
+  --shadow-x: 0;
+  --shadow-y: 1px;
+  --shadow-blur: 2px;
+  --shadow-spread: 0px;
+  --shadow-opacity: 0.05;
+  --shadow-color: rgb(20, 30, 45);
+  --shadow-2xs: 0 1px 0 hsl(220 25% 12% / 0.04);
+  --shadow-xs:  0 1px 0 hsl(220 25% 12% / 0.05);
+  --shadow-sm:  0 1px 2px 0 hsl(220 25% 12% / 0.05), 0 1px 1px -1px hsl(220 25% 12% / 0.04);
+  --shadow:     0 1px 2px 0 hsl(220 25% 12% / 0.05), 0 1px 2px -1px hsl(220 25% 12% / 0.05);
+  --shadow-md:  0 4px 12px 0 hsl(220 25% 12% / 0.06), 0 2px 4px -2px hsl(220 25% 12% / 0.04);
+  --shadow-lg:  0 6px 24px 0 hsl(220 25% 12% / 0.06), 0 4px 8px -4px hsl(220 25% 12% / 0.04);
+  --shadow-xl:  0 10px 40px 0 hsl(220 25% 12% / 0.08);
+  --shadow-2xl: 0 20px 60px 0 hsl(220 25% 12% / 0.12);
+
+  --tracking-normal: -0.005em;
+  --spacing: 0.25rem;
+}
+
+.dark {
+  /* ── Polar Night (deep cool darks) ─────────────────────────── */
+  --background: rgb(32, 38, 47);          /* pn-1 canvas */
+  --foreground: rgb(229, 233, 240);
+  --card: rgb(38, 45, 56);                /* pn-2 surface */
+  --card-foreground: rgb(229, 233, 240);
+  --popover: rgb(46, 55, 66);             /* pn-3 elevated */
+  --popover-foreground: rgb(229, 233, 240);
+
+  /* ── Frost on dark ─────────────────────────────────────────── */
+  --primary: rgb(136, 192, 208);
+  --primary-foreground: rgb(14, 19, 27);
+  --secondary: rgb(46, 55, 66);
+  --secondary-foreground: rgb(229, 233, 240);
+  --muted: rgb(38, 45, 56);
+  --muted-foreground: rgb(136, 147, 163);
+  --accent: rgb(143, 188, 187);
+  --accent-foreground: rgb(14, 19, 27);
+
+  --destructive: rgb(191, 97, 106);
+  --destructive-foreground: rgb(229, 233, 240);
+
+  --border: rgb(58, 67, 80);              /* pn-4 hairline */
+  --input: rgb(58, 67, 80);
+  --ring: rgb(136, 192, 208);
+
+  --chart-1: rgb(136, 192, 208);
+  --chart-2: rgb(129, 161, 193);
+  --chart-3: rgb(94, 129, 172);
+  --chart-4: rgb(143, 188, 187);
+  --chart-5: rgb(180, 142, 173);
+
+  /* ── Sidebar (dark — slightly deeper than canvas) ──────────── */
+  --sidebar: rgb(26, 31, 41);             /* pn-0 deepest */
+  --sidebar-foreground: rgb(196, 202, 214);
+  --sidebar-primary: rgb(136, 192, 208);
+  --sidebar-primary-foreground: rgb(14, 19, 27);
+  --sidebar-accent: rgb(46, 55, 66);
+  --sidebar-accent-foreground: rgb(229, 233, 240);
+  --sidebar-border: rgb(58, 67, 80);
+  --sidebar-ring: rgb(74, 84, 98);
+
+  /* ── Status / Priority on dark ─────────────────────────────── */
+  --status-todo:  rgb(129, 161, 193);
+  --status-doing: rgb(136, 192, 208);
+  --status-done:  rgb(143, 188, 187);
+
+  --priority-low:  rgb(107, 120, 137);
+  --priority-med:  rgb(136, 192, 208);
+  --priority-high: rgb(208, 135, 112);
 }
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-serif: var(--font-instrument-serif);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Domain-specific tokens (status, priority) */
+  --color-status-todo:  var(--status-todo);
+  --color-status-doing: var(--status-doing);
+  --color-status-done:  var(--status-done);
+  --color-priority-low:  var(--priority-low);
+  --color-priority-med:  var(--priority-med);
+  --color-priority-high: var(--priority-high);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-serif: var(--font-serif);
+
+  --radius-sm: calc(var(--radius) - 4px);   /* 6px */
+  --radius-md: calc(var(--radius) - 2px);   /* 8px */
+  --radius-lg: var(--radius);               /* 10px */
+  --radius-xl: calc(var(--radius) + 4px);   /* 14px */
+  --radius-2xl: calc(var(--radius) + 10px); /* 20px */
+
+  --shadow-2xs: var(--shadow-2xs);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow: var(--shadow);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-2xl: var(--shadow-2xl);
 }
 
-body {
-  font-family: var(--font-geist-sans), -apple-system, sans-serif;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  line-height: 1.6;
-  overflow-x: hidden;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "ss01", "cv11";
+    letter-spacing: -0.005em;
+  }
 }
 
-/* Noise texture overlay */
+/* ── Subtle dotted breathing pattern (replaces noise) ────────── */
 body::before {
   content: '';
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-  opacity: 0.03;
+  inset: 0;
   pointer-events: none;
   z-index: 1000;
+  opacity: 0.4;
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    color-mix(in oklch, var(--foreground) 6%, transparent) 1px,
+    transparent 0
+  );
+  background-size: 24px 24px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
 }
 
-/* Keyframe animations */
+/* ── Animations ──────────────────────────────────────────────── */
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes floatUp {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.5; }
+}
+
+/* Suave para drag/drop de tasks */
+@keyframes settle {
+  0%   { transform: scale(1.02); box-shadow: var(--shadow-md); }
+  100% { transform: scale(1);    box-shadow: var(--shadow-sm); }
 }
