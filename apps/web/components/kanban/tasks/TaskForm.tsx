@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
-import { Trash2 } from "lucide-react"
+import { Check, Copy, Trash2 } from "lucide-react"
 import type { Board, Task } from "@repo/core"
 
 import { Button } from "@/components/ui/button"
@@ -59,6 +59,7 @@ export function TaskForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [copied, setCopied] = useState(false)
   const [selectedBoardId, setSelectedBoardId] = useState<string | undefined>(
     initialBoardId ?? task?.boardId
   )
@@ -141,6 +142,38 @@ export function TaskForm({
     }
   }
 
+  const handleCopy = async () => {
+    if (!task) return
+    const values = form.getValues()
+    const boardName =
+      boards.find((b) => b.id === task.boardId)?.name ?? "—"
+    const idStr = `#PR-${String(task.pr).padStart(3, "0")}`
+    const title = values.title?.trim() || task.title
+    const priority = values.priority ?? task.priority
+    const description = (values.description ?? task.description ?? "").trim()
+
+    const md = [
+      `# ${idStr} — ${title}`,
+      ``,
+      `- **Proyecto:** ${boardName}`,
+      `- **ID:** ${idStr}`,
+      `- **Prioridad:** ${priority}`,
+      ``,
+      `## Descripción`,
+      ``,
+      description || "_(sin descripción)_",
+    ].join("\n")
+
+    try {
+      await navigator.clipboard.writeText(md)
+      setCopied(true)
+      toast.success("Copiado al portapapeles")
+      setTimeout(() => setCopied(false), 1800)
+    } catch {
+      toast.error("No se pudo copiar")
+    }
+  }
+
   const idDisplay =
     isEdit && task
       ? `#PR-${String(task.pr).padStart(3, "0")}`
@@ -192,6 +225,20 @@ export function TaskForm({
             ))}
           </SelectContent>
         </Select>
+
+        {isEdit && task && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleCopy}
+            className="ml-auto h-7 gap-1.5 text-xs"
+            aria-label="Copiar tarea al portapapeles"
+          >
+            {copied ? <Check /> : <Copy />}
+            Copy
+          </Button>
+        )}
       </div>
 
       <Controller
