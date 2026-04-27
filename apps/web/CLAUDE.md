@@ -30,6 +30,9 @@ Copy `.env.example` to `.env` and configure:
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
 CLERK_SECRET_KEY=sk_test_...
 
+# Public URL del deploy (opcional). Se inyecta en el SKILL.md de la pagina /skill al copiar.
+# Si no se setea, la pagina usa window.location.origin como fallback.
+NEXT_PUBLIC_LIVE_URL=https://tu-dominio.example
 ```
 Whe are using turbo repo to manage the monorepo , so thhe backend functions are in apps/api and the services are in the package `core`
 
