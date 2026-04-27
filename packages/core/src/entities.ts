@@ -12,13 +12,36 @@ const BoardSchema = z.object({
 
 export type Board = z.infer<typeof BoardSchema>
 
+const ColumnSchema = z.object({
+    id: z.string(),
+    userId: z.string(),
+    name: z.string(),
+    color: z.string(),
+    position: z.number(),
+    createdAt: z.string(),
+})
+
+const CreateColumnSchema = z.object({
+    name: z.string().min(1).max(50),
+    color: z.string().max(32).optional(),
+})
+
+const UpdateColumnSchema = z.object({
+    name: z.string().min(1).max(50).optional(),
+    color: z.string().max(32).optional(),
+})
+
+export type Column = z.infer<typeof ColumnSchema>
+export type CreateColumn = z.infer<typeof CreateColumnSchema>
+export type UpdateColumn = z.infer<typeof UpdateColumnSchema>
+
 const TaskSchema = z.object({
     id: z.string(),
     userId: z.string(),
     title: z.string(),
     description: z.string(),
     priority: z.enum(['low', 'medium', 'high']),
-    status: z.enum(['todo', 'doing', 'done']),
+    columnId: z.string(),
     source: z.enum(['internal', 'external']),
     createdBy: z.string().nullable(),
     boardId: z.string(),
@@ -33,7 +56,6 @@ const CreateTaskSchema = TaskSchema.omit({ id: true, pr: true }).extend({
 export type CreateTask = z.infer<typeof CreateTaskSchema>
 export type Task = z.infer<typeof TaskSchema>
 export type Priority = Task['priority']
-export type Status = Task['status']
 
 const ApiKeySchema = z.object({
     id: z.string(),

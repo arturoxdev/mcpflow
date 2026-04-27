@@ -23,7 +23,7 @@ class TaskService {
       title: task.title,
       description: task.description,
       priority: task.priority,
-      status: task.status,
+      columnId: task.columnId,
       source: task.source ?? 'internal',
       createdBy: task.createdBy ?? null,
       boardId: task.boardId,
@@ -77,7 +77,7 @@ class TaskService {
         title: task.title,
         description: task.description,
         priority: task.priority,
-        status: task.status,
+        columnId: task.columnId,
       })
       .where(
         and(

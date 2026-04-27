@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { taskService } from '@repo/core'
+import { taskService, columnService } from '@repo/core'
 import { getAuth } from '@/lib/auth'
 
 export async function GET(
@@ -36,12 +36,18 @@ export async function PATCH(
   }
 
   const body = await request.json()
-  const { title, description, priority, status } = body
+  const { title, description, priority, columnId } = body
 
   if (title !== undefined) task.title = title
   if (description !== undefined) task.description = description
   if (priority !== undefined) task.priority = priority
-  if (status !== undefined) task.status = status
+  if (columnId !== undefined) {
+    const column = await columnService.getById(columnId, session.userId)
+    if (!column) {
+      return NextResponse.json({ error: 'Column not found' }, { status: 400 })
+    }
+    task.columnId = column.id
+  }
 
   await taskService.update(taskId, boardId, session.userId, task)
 

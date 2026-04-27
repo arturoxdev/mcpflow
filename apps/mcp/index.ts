@@ -1,8 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
-import { boardService } from '@repo/core'
-import { taskService } from '@repo/core'
+import { boardService, columnService, taskService } from '@repo/core'
 import { z } from "zod";
 import type { Request, Response } from 'express';
 
@@ -24,7 +23,6 @@ const getServer = () => {
         },
         async ({ userId }) => {
             try {
-                console.log('list_boards')
                 const boards = await boardService.getAll(userId)
 
                 const boardList = boards
@@ -46,40 +44,58 @@ const getServer = () => {
             }
         }
     )
+
+    server.registerTool(
+        'list_columns',
+        {
+            title: 'List Columns',
+            description: 'Lista las columnas globales del usuario (aplican a todos sus boards), en orden de posición',
+            inputSchema: {
+                userId: z.string().describe('ID del usuario'),
+            }
+        },
+        async ({ userId }) => {
+            try {
+                const columns = await columnService.ensureForUser(userId)
+                const text = columns.length
+                    ? `📊 Columnas del flujo:\n` +
+                      columns.map((c) => `- ${c.name} (${c.id})`).join('\n')
+                    : 'No hay columnas configuradas.'
+                return { content: [{ type: 'text', text }] }
+            } catch (error) {
+                return {
+                    content: [{ type: 'text', text: `❌ Error: ${String(error)}` }]
+                }
+            }
+        }
+    )
+
     server.registerTool(
         'list_tasks',
         {
             title: 'List Tasks',
-            description: 'Lista todas las tareas de un board específico',
+            description: 'Lista todas las tareas de un board agrupadas por columna',
             inputSchema: {
-                boardId: z.string().describe('ID del board')
+                boardId: z.string().describe('ID del board'),
+                userId: z.string().describe('ID del usuario'),
             }
         },
-        async ({ boardId }) => {
+        async ({ boardId, userId }) => {
             try {
-                const tasks = await taskService.getAll(boardId)
+                const [tasks, columns] = await Promise.all([
+                    taskService.getAll(boardId, userId),
+                    columnService.ensureForUser(userId),
+                ])
 
-                const grouped = {
-                    todo: tasks.filter((t: any) => t.status === 'todo'),
-                    doing: tasks.filter((t: any) => t.status === 'doing'),
-                    done: tasks.filter((t: any) => t.status === 'done')
-                }
-
-                const formatTasks = (list: any[]) =>
-                    list.length
-                        ? list.map((t: any) => `  - [${t.priority}] ${t.title} (${t.id}) ${t.description}`).join('\n')
+                const sections = columns.map((col) => {
+                    const colTasks = tasks.filter((t: any) => t.columnId === col.id)
+                    const formatted = colTasks.length
+                        ? colTasks.map((t: any) => `  - [${t.priority}] ${t.title} (${t.id}) ${t.description}`).join('\n')
                         : '  (vacío)'
+                    return `📌 ${col.name.toUpperCase()}:\n${formatted}`
+                })
 
-                const output = `📋 Tareas del board ${boardId}:
-
-📌 TODO:
-${formatTasks(grouped.todo)}
-
-🔄 DOING:
-${formatTasks(grouped.doing)}
-
-✅ DONE:
-${formatTasks(grouped.done)}`
+                const output = `📋 Tareas del board ${boardId}:\n\n${sections.join('\n\n')}`
 
                 return {
                     content: [{ type: 'text', text: output }]
@@ -91,33 +107,41 @@ ${formatTasks(grouped.done)}`
             }
         }
     )
+
     server.registerTool(
         'create_task',
         {
             title: 'Create Task',
-            description: 'Crea una nueva tarea en la columna Todo de un board',
+            description: 'Crea una nueva tarea en la primera columna del board (o en una columna específica)',
             inputSchema: {
                 boardId: z.string().describe('ID del board'),
                 title: z.string().max(120).describe('Título de la tarea (máx 120 caracteres)'),
                 priority: z.enum(['low', 'medium', 'high']).describe('Prioridad de la tarea'),
                 description: z.string().optional().describe('Descripción en markdown (opcional)'),
-                userId: z.string().describe('ID del usuario')
+                userId: z.string().describe('ID del usuario'),
+                columnId: z.string().optional().describe('ID de la columna destino (opcional, default = primera)'),
             }
         },
-        async ({ boardId, title, priority, description, userId }) => {
+        async ({ boardId, title, priority, description, userId, columnId }) => {
             try {
+                let resolvedColumnId = columnId
+                if (!resolvedColumnId) {
+                    const userCols = await columnService.ensureForUser(userId)
+                    const first = userCols[0]
+                    if (!first) throw new Error('Sin columnas configuradas.')
+                    resolvedColumnId = first.id
+                }
 
                 const task = await taskService.create({
                     title,
                     priority,
                     description: description || '',
-                    status: 'todo',
+                    columnId: resolvedColumnId,
                     boardId,
                     userId
                 })
-                const text = `📋 Tarea ${task.id}: ${task.title}`
                 return {
-                    content: [{ type: 'text', text }]
+                    content: [{ type: 'text', text: `📋 Tarea ${task.id}: ${task.title}` }]
                 }
             } catch (error) {
                 return {
@@ -126,6 +150,7 @@ ${formatTasks(grouped.done)}`
             }
         }
     )
+
     server.registerTool(
         'update_task',
         {
@@ -134,14 +159,15 @@ ${formatTasks(grouped.done)}`
             inputSchema: {
                 boardId: z.string().describe('ID del board'),
                 taskId: z.string().describe('ID de la tarea'),
+                userId: z.string().describe('ID del usuario'),
                 title: z.string().max(120).describe('Título de la tarea (máx 120 caracteres)'),
                 priority: z.enum(['low', 'medium', 'high']).describe('Prioridad de la tarea'),
                 description: z.string().optional().describe('Descripción en markdown (opcional)')
             }
         },
-        async ({ boardId, taskId, title, priority, description }) => {
+        async ({ boardId, taskId, userId, title, priority, description }) => {
             try {
-                const task = await taskService.getById(taskId, boardId)
+                const task = await taskService.getById(taskId, boardId, userId)
 
                 if (!task) {
                     throw new Error('Tarea no encontrada')
@@ -150,7 +176,7 @@ ${formatTasks(grouped.done)}`
                 task.title = title
                 task.priority = priority
                 task.description = description || ''
-                await taskService.update(taskId, boardId, task)
+                await taskService.update(taskId, boardId, userId, task)
 
                 return {
                     content: [{ type: 'text', text: `✅ Tarea actualizada: "${task.title}" (${task.id})` }]
@@ -162,16 +188,18 @@ ${formatTasks(grouped.done)}`
             }
         }
     )
+
     server.registerTool('list_task_by_id', {
         title: 'List Task by ID',
         description: 'List a task by ID',
         inputSchema: {
             boardId: z.string().describe('ID del board'),
-            taskId: z.string().describe('ID de la tarea')
+            taskId: z.string().describe('ID de la tarea'),
+            userId: z.string().describe('ID del usuario'),
         }
-    }, async ({ boardId, taskId }) => {
+    }, async ({ boardId, taskId, userId }) => {
         try {
-            const task = await taskService.getById(taskId, boardId)
+            const task = await taskService.getById(taskId, boardId, userId)
             return {
                 content: [{ type: 'text', text: `📋 Tarea ${taskId}: ${task?.title} ${task?.description}` }]
             }
@@ -181,30 +209,32 @@ ${formatTasks(grouped.done)}`
             }
         }
     })
+
     server.registerTool(
         'move_task',
         {
             title: 'Move Task',
-            description: 'Move a task to another column (todo, doing, done)',
+            description: 'Mueve una tarea a otra columna del board',
             inputSchema: {
                 boardId: z.string().describe('ID del board'),
                 taskId: z.string().describe('ID de la tarea'),
-                status: z.enum(['todo', 'doing', 'done']).describe('Nueva columna')
+                userId: z.string().describe('ID del usuario'),
+                columnId: z.string().describe('ID de la columna destino'),
             }
         },
-        async ({ boardId, taskId, status }) => {
+        async ({ boardId, taskId, userId, columnId }) => {
             try {
-                const task = await taskService.getById(taskId, boardId)
+                const task = await taskService.getById(taskId, boardId, userId)
+                if (!task) throw new Error('Tarea no encontrada')
 
-                if (!task) {
-                    throw new Error('Tarea no encontrada')
-                }
+                const column = await columnService.getById(columnId, userId)
+                if (!column) throw new Error('Columna no encontrada')
 
-                task.status = status
-                await taskService.update(taskId, boardId, task)
+                task.columnId = columnId
+                await taskService.update(taskId, boardId, userId, task)
 
                 return {
-                    content: [{ type: 'text', text: `✅ Tarea ${taskId} movida a "${status}"` }]
+                    content: [{ type: 'text', text: `✅ Tarea ${taskId} movida a "${column.name}"` }]
                 }
             } catch (error) {
                 return {
@@ -213,6 +243,7 @@ ${formatTasks(grouped.done)}`
             }
         }
     )
+
     server.registerTool(
         'delete_task',
         {
@@ -220,18 +251,16 @@ ${formatTasks(grouped.done)}`
             description: 'Delete a task from a board',
             inputSchema: {
                 boardId: z.string().describe('ID del board'),
-                taskId: z.string().describe('ID de la tarea')
+                taskId: z.string().describe('ID de la tarea'),
+                userId: z.string().describe('ID del usuario'),
             }
         },
-        async ({ boardId, taskId }) => {
+        async ({ boardId, taskId, userId }) => {
             try {
-                const task = await taskService.getById(taskId, boardId)
+                const task = await taskService.getById(taskId, boardId, userId)
+                if (!task) throw new Error('Tarea no encontrada')
 
-                if (!task) {
-                    throw new Error('Tarea no encontrada')
-                }
-
-                await taskService.delete(taskId, boardId)
+                await taskService.delete(taskId, boardId, userId)
 
                 return {
                     content: [{ type: 'text', text: `✅ Tarea ${taskId} eliminada` }]
@@ -305,13 +334,11 @@ app.delete('/mcp', async (req: Request, res: Response) => {
     );
 });
 
-// Start the server
 const PORT = 3001;
 app.listen(PORT, () => {
     console.log(`MCP Stateless Streamable HTTP Server listening on port ${PORT}`);
 });
 
-// Handle server shutdown
 process.on('SIGINT', async () => {
     console.log('Shutting down server...');
     process.exit(0);

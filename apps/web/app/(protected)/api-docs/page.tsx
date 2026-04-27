@@ -40,13 +40,15 @@ const SAMPLE_BOARD = {
   createdAt: "2026-04-25T14:32:11.000Z",
 }
 
+const SAMPLE_COLUMN_ID = "01J9YXZCM4N5O6P7Q8R9S0T1U2"
+
 const SAMPLE_TASK = {
   id: SAMPLE_TASK_ID,
   userId: SAMPLE_USER_ID,
   title: "Write launch announcement",
   description: "Draft the blog post and social copy",
   priority: "high",
-  status: "doing",
+  columnId: SAMPLE_COLUMN_ID,
   boardId: SAMPLE_BOARD_ID,
   pr: 7,
 }
@@ -65,7 +67,7 @@ const TASK_MODEL = `{
   title: string
   description: string
   priority: 'low' | 'medium' | 'high'
-  status: 'todo' | 'doing' | 'done'
+  columnId: string                        // FK a una columna del board (ver /api/boards/{boardId}/columns)
   boardId: string
   pr: number                              // numero correlativo dentro del board
 }`
@@ -114,19 +116,19 @@ const ENDPOINTS: Endpoint[] = [
     path: "/api/boards/{boardId}/tasks",
     title: "Crear una task",
     description:
-      "Crea una task dentro del board indicado. Solo `title` es obligatorio. `priority` por defecto es `medium`, `status` por defecto es `todo`. Responde 201 con la task creada.",
+      "Crea una task dentro del board indicado. Solo `title` es obligatorio. `priority` por defecto es `medium`. Si no envías `columnId`, la task se crea en la primera columna del board. Responde 201 con la task creada.",
     requestBody: JSON.stringify(
       {
         title: "Write launch announcement",
         description: "Draft the blog post and social copy",
         priority: "high",
-        status: "doing",
+        columnId: SAMPLE_COLUMN_ID,
       },
       null,
       2
     ),
     curl: (base) =>
-      `curl -X POST "${base}/api/boards/${SAMPLE_BOARD_ID}/tasks" \\\n  -H "Authorization: Bearer $YOUR_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "title": "Write launch announcement",\n    "description": "Draft the blog post and social copy",\n    "priority": "high",\n    "status": "doing"\n  }'`,
+      `curl -X POST "${base}/api/boards/${SAMPLE_BOARD_ID}/tasks" \\\n  -H "Authorization: Bearer $YOUR_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "title": "Write launch announcement",\n    "description": "Draft the blog post and social copy",\n    "priority": "high",\n    "columnId": "${SAMPLE_COLUMN_ID}"\n  }'`,
     exampleResponse: JSON.stringify(SAMPLE_TASK, null, 2),
   },
   {
@@ -137,16 +139,16 @@ const ENDPOINTS: Endpoint[] = [
       "Actualiza parcialmente una task. Todos los campos del body son opcionales; solo se modifican los que envíes. Devuelve la task con los cambios aplicados.",
     requestBody: JSON.stringify(
       {
-        status: "done",
+        columnId: SAMPLE_COLUMN_ID,
         priority: "low",
       },
       null,
       2
     ),
     curl: (base) =>
-      `curl -X PATCH "${base}/api/boards/${SAMPLE_BOARD_ID}/tasks/${SAMPLE_TASK_ID}" \\\n  -H "Authorization: Bearer $YOUR_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "status": "done",\n    "priority": "low"\n  }'`,
+      `curl -X PATCH "${base}/api/boards/${SAMPLE_BOARD_ID}/tasks/${SAMPLE_TASK_ID}" \\\n  -H "Authorization: Bearer $YOUR_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "columnId": "${SAMPLE_COLUMN_ID}",\n    "priority": "low"\n  }'`,
     exampleResponse: JSON.stringify(
-      { ...SAMPLE_TASK, status: "done", priority: "low" },
+      { ...SAMPLE_TASK, priority: "low" },
       null,
       2
     ),

@@ -4,8 +4,7 @@ export { Card } from "./Card"
 export { PriorityBadge } from "./PriorityBadge"
 export { PRBadge } from "./PRBadge"
 export { useKanban } from "./hooks/useKanban"
-export { COLUMNS } from "./constants"
-export type { Task, Board, Priority, Status } from "@repo/core"
+export type { Task, Board, Priority, Column as ColumnEntity } from "@repo/core"
 
 // Task form components
 export { TaskForm } from "./tasks/TaskForm"

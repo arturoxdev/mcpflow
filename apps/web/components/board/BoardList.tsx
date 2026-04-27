@@ -13,41 +13,30 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core"
-import type { Status, Task } from "@repo/core"
+import type { Column, Task } from "@repo/core"
 
 import { PriorityGlyph } from "@/components/kanban/PriorityGlyph"
 import { cn } from "@/lib/utils"
-import { StatusGlyph } from "./StatusGlyph"
 
 interface BoardListProps {
   tasks: Task[]
+  columns: Column[]
   boardId?: string
   boardNameById?: Map<string, string>
-  onMove?: (taskId: string, newStatus: Status) => void
+  onMove?: (taskId: string, newColumnId: string) => void
 }
-
-const SECTIONS: {
-  id: Status
-  name: string
-  dotClass: string
-  defaultOpen: boolean
-}[] = [
-  { id: "doing", name: "En curso", dotClass: "bg-chart-3", defaultOpen: true },
-  { id: "todo", name: "Por hacer", dotClass: "bg-destructive", defaultOpen: true },
-  { id: "done", name: "Hechas", dotClass: "bg-chart-4", defaultOpen: false },
-]
 
 export function BoardList({
   tasks,
+  columns,
   boardId,
   boardNameById,
   onMove,
 }: BoardListProps) {
+  const showBoardName = !!boardNameById
   const newTaskHref = boardId
     ? `/boards/tasks/new?boardId=${boardId}`
-    : "/boards/tasks/new"
-
-  const showBoardName = !!boardNameById
+    : null
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -67,10 +56,10 @@ export function BoardList({
     const { active, over } = event
     if (!over || !onMove) return
     const taskId = active.id as string
-    const newStatus = over.id as Status
+    const newColumnId = over.id as string
     const task = tasks.find((t) => t.id === taskId)
-    if (task && task.status !== newStatus) {
-      onMove(taskId, newStatus)
+    if (task && task.columnId !== newColumnId) {
+      onMove(taskId, newColumnId)
     }
   }
 
@@ -81,17 +70,18 @@ export function BoardList({
       onDragEnd={handleDragEnd}
     >
       <div className="flex flex-col gap-9">
-        {SECTIONS.map((section) => {
-          const sectionTasks = tasks.filter((t) => t.status === section.id)
+        {columns.map((column) => {
+          const sectionTasks = tasks.filter((t) => t.columnId === column.id)
           return (
             <ListSection
-              key={section.id}
-              id={section.id}
-              name={section.name}
-              dotClass={section.dotClass}
+              key={column.id}
+              id={column.id}
+              name={column.name}
+              dotClass={column.color}
               tasks={sectionTasks}
-              defaultOpen={section.defaultOpen}
-              newTaskHref={newTaskHref}
+              defaultOpen={true}
+              newTaskHref={newTaskHref ? `${newTaskHref}&columnId=${column.id}` : null}
+              columns={columns}
               boardNameById={boardNameById}
               showBoardName={showBoardName}
             />
@@ -102,12 +92,10 @@ export function BoardList({
         {activeTask ? (
           <DragRowPreview
             task={activeTask}
-            boardName={
-              showBoardName
-                ? boardNameById?.get(activeTask.boardId)
-                : undefined
+            columnColor={
+              columns.find((c) => c.id === activeTask.columnId)?.color ??
+              "bg-muted"
             }
-            showBoardName={showBoardName}
           />
         ) : null}
       </DragOverlay>
@@ -116,12 +104,13 @@ export function BoardList({
 }
 
 interface ListSectionProps {
-  id: Status
+  id: string
   name: string
   dotClass: string
   tasks: Task[]
   defaultOpen: boolean
-  newTaskHref: string
+  newTaskHref: string | null
+  columns: Column[]
   boardNameById?: Map<string, string>
   showBoardName: boolean
 }
@@ -133,6 +122,7 @@ function ListSection({
   tasks,
   defaultOpen,
   newTaskHref,
+  columns,
   boardNameById,
   showBoardName,
 }: ListSectionProps) {
@@ -177,6 +167,10 @@ function ListSection({
               <ListRow
                 key={task.id}
                 task={task}
+                columnColor={
+                  columns.find((c) => c.id === task.columnId)?.color ??
+                  "bg-muted"
+                }
                 boardName={
                   showBoardName
                     ? boardNameById?.get(task.boardId)
@@ -186,13 +180,15 @@ function ListSection({
               />
             ))
           )}
-          <Link
-            href={newTaskHref}
-            className="border-border text-muted-foreground hover:border-ring hover:text-foreground mt-3 inline-flex items-center gap-1.5 rounded-md border border-dashed px-3 py-1.5 text-xs transition-colors"
-          >
-            <Plus className="size-3.5" />
-            Añadir tarea a {name.toLowerCase()}
-          </Link>
+          {newTaskHref && (
+            <Link
+              href={newTaskHref}
+              className="border-border text-muted-foreground hover:border-ring hover:text-foreground mt-3 inline-flex items-center gap-1.5 rounded-md border border-dashed px-3 py-1.5 text-xs transition-colors"
+            >
+              <Plus className="size-3.5" />
+              Añadir tarea a {name.toLowerCase()}
+            </Link>
+          )}
         </div>
       ) : (
         isOver && (
@@ -207,12 +203,12 @@ function ListSection({
 
 interface ListRowProps {
   task: Task
+  columnColor: string
   boardName?: string
   showBoardName: boolean
 }
 
-function ListRow({ task, boardName, showBoardName }: ListRowProps) {
-  const isDone = task.status === "done"
+function ListRow({ task, columnColor, boardName, showBoardName }: ListRowProps) {
   const prPadded = String(task.pr).padStart(3, "0")
   const href = `/boards/${task.boardId}/tasks/${task.id}`
 
@@ -241,20 +237,15 @@ function ListRow({ task, boardName, showBoardName }: ListRowProps) {
         isDragging && "opacity-40"
       )}
     >
-      <StatusGlyph status={task.status} />
+      <span
+        className={cn("size-2 rounded-full", columnColor)}
+        aria-hidden
+      />
       <Link
         href={href}
         className="text-foreground rounded-sm outline-none before:absolute before:inset-0 before:content-[''] focus-visible:ring-2 focus-visible:ring-ring/50"
       >
-        <span
-          className={cn(
-            "text-sm leading-snug",
-            isDone &&
-              "text-muted-foreground decoration-muted-foreground/60 line-through"
-          )}
-        >
-          {task.title}
-        </span>
+        <span className="text-sm leading-snug">{task.title}</span>
       </Link>
       <PriorityGlyph priority={task.priority} />
       {showBoardName && (
@@ -272,26 +263,16 @@ function ListRow({ task, boardName, showBoardName }: ListRowProps) {
 
 interface DragRowPreviewProps {
   task: Task
-  boardName?: string
-  showBoardName: boolean
+  columnColor: string
 }
 
-function DragRowPreview({
-  task,
-  boardName,
-  showBoardName,
-}: DragRowPreviewProps) {
+function DragRowPreview({ task, columnColor }: DragRowPreviewProps) {
   const prPadded = String(task.pr).padStart(3, "0")
   return (
     <div className="bg-card border-border ring-foreground/5 flex items-center gap-3 rounded-lg border px-3 py-2.5 text-sm shadow-lg ring-1">
-      <StatusGlyph status={task.status} />
+      <span className={cn("size-2 rounded-full", columnColor)} aria-hidden />
       <span className="text-foreground truncate font-medium">{task.title}</span>
       <PriorityGlyph priority={task.priority} className="ml-auto" />
-      {showBoardName && boardName && (
-        <span className="text-muted-foreground/70 font-mono text-xs">
-          {boardName}
-        </span>
-      )}
       <span className="text-muted-foreground font-mono text-xs">
         #PR-{prPadded}
       </span>

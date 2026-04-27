@@ -6,17 +6,55 @@ const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 export function registerTools(server: McpServer) {
 
+  // LIST COLUMNS
+  server.registerTool(
+    'list_columns',
+    {
+      title: 'List Columns',
+      description: 'Lista las columnas globales del usuario (aplican a todos sus boards), en orden de posición',
+      inputSchema: {},
+      outputSchema: {
+        success: z.boolean(),
+        columns: z.array(z.object({
+          id: z.string(),
+          name: z.string(),
+          position: z.number(),
+        })).optional(),
+        error: z.string().optional(),
+      }
+    },
+    async () => {
+      try {
+        const response = await fetch(`${BASE_URL}/api/columns`)
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        const columns = await response.json()
+        const output = { success: true, columns }
+        return {
+          content: [{ type: 'text', text: JSON.stringify(output) }],
+          structuredContent: output,
+        }
+      } catch (error) {
+        const output = { success: false, error: String(error) }
+        return {
+          content: [{ type: 'text', text: JSON.stringify(output) }],
+          structuredContent: output,
+        }
+      }
+    }
+  )
+
   // CREATE TASK
   server.registerTool(
     'create_task',
     {
       title: 'Create Task',
-      description: 'Crea una nueva tarea en la columna Todo de un board',
+      description: 'Crea una nueva tarea en la primera columna del board (o en una columna específica)',
       inputSchema: {
         boardId: z.string().describe('ID del board'),
         title: z.string().max(120).describe('Título de la tarea (máx 120 caracteres)'),
         priority: z.enum(['low', 'medium', 'high']).describe('Prioridad de la tarea'),
-        description: z.string().optional().describe('Descripción en markdown (opcional)')
+        description: z.string().optional().describe('Descripción en markdown (opcional)'),
+        columnId: z.string().optional().describe('ID de la columna destino (opcional, default = primera)'),
       },
       outputSchema: {
         success: z.boolean(),
@@ -24,12 +62,12 @@ export function registerTools(server: McpServer) {
           id: z.string(),
           title: z.string(),
           priority: z.string(),
-          status: z.string()
+          columnId: z.string(),
         }).optional(),
         error: z.string().optional()
       }
     },
-    async ({ boardId, title, priority, description }) => {
+    async ({ boardId, title, priority, description, columnId }) => {
       try {
         const response = await fetch(`${BASE_URL}/api/boards/${boardId}/tasks`, {
           method: 'POST',
@@ -38,7 +76,7 @@ export function registerTools(server: McpServer) {
             title,
             priority,
             description: description || '',
-            status: 'todo'
+            ...(columnId ? { columnId } : {}),
           })
         })
 
@@ -68,23 +106,23 @@ export function registerTools(server: McpServer) {
     'move_task',
     {
       title: 'Move Task',
-      description: 'Mueve una tarea a otra columna',
+      description: 'Mueve una tarea a otra columna del board',
       inputSchema: {
         boardId: z.string().describe('ID del board'),
         taskId: z.string().describe('ID de la tarea'),
-        status: z.enum(['todo', 'doing', 'done']).describe('Nueva columna')
+        columnId: z.string().describe('ID de la columna destino'),
       },
       outputSchema: {
         success: z.boolean(),
         error: z.string().optional()
       }
     },
-    async ({ boardId, taskId, status }) => {
+    async ({ boardId, taskId, columnId }) => {
       try {
         const response = await fetch(`${BASE_URL}/api/boards/${boardId}/tasks/${taskId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status })
+          body: JSON.stringify({ columnId })
         })
 
         if (!response.ok) {

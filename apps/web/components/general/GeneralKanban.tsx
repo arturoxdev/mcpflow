@@ -9,19 +9,19 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core"
-import type { Status, Task } from "@repo/core"
+import type { Column as ColumnEntity, Task } from "@repo/core"
 
 import { Card } from "@/components/kanban/Card"
 import { Column } from "@/components/kanban/Column"
-import { COLUMNS } from "@/components/kanban/constants"
 
 interface Props {
   tasks: Task[]
+  columns: ColumnEntity[]
   boardNameById: Map<string, string>
-  onMove: (taskId: string, newStatus: Status) => void
+  onMove: (taskId: string, newColumnId: string) => void
 }
 
-export function GeneralKanban({ tasks, boardNameById, onMove }: Props) {
+export function GeneralKanban({ tasks, columns, boardNameById, onMove }: Props) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   )
@@ -41,15 +41,16 @@ export function GeneralKanban({ tasks, boardNameById, onMove }: Props) {
     if (!over) return
 
     const taskId = active.id as string
-    const newStatus = over.id as Status
+    const newColumnId = over.id as string
 
     const task = tasks.find((t) => t.id === taskId)
-    if (task && task.status !== newStatus) {
-      onMove(taskId, newStatus)
+    if (task && task.columnId !== newColumnId) {
+      onMove(taskId, newColumnId)
     }
   }
 
-  const tasksByStatus = (s: Status) => tasks.filter((t) => t.status === s)
+  const tasksByColumn = (columnId: string) =>
+    tasks.filter((t) => t.columnId === columnId)
 
   return (
     <DndContext
@@ -58,13 +59,13 @@ export function GeneralKanban({ tasks, boardNameById, onMove }: Props) {
       onDragEnd={handleDragEnd}
     >
       <div className="flex gap-6 overflow-x-auto pb-4">
-        {COLUMNS.map((col) => (
+        {columns.map((col) => (
           <Column
             key={col.id}
             id={col.id}
-            title={col.title}
-            dotClass={col.dotClass}
-            tasks={tasksByStatus(col.id)}
+            title={col.name}
+            dotClass={col.color}
+            tasks={tasksByColumn(col.id)}
             boardId=""
             boardNameById={boardNameById}
             hideAddTask

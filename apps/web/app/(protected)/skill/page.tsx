@@ -73,7 +73,7 @@ Task:
   title: string
   description: string
   priority: 'low' | 'medium' | 'high'
-  status: 'todo' | 'doing' | 'done'
+  columnId: string   // FK to board column (use /api/boards/<id>/columns to list)
   boardId: string
   pr: number         // correlative number inside the board
 }
@@ -102,9 +102,16 @@ curl -s "{{API_BASE_URL}}/api/boards/<boardId>/tasks/<taskId>" \\
   -H "Authorization: Bearer {{ZB_API_KEY}}"
 \`\`\`
 
+### List columns of a board
+
+\`\`\`bash
+curl -s "{{API_BASE_URL}}/api/boards/<boardId>/columns" \\
+  -H "Authorization: Bearer {{ZB_API_KEY}}"
+\`\`\`
+
 ### Create a task
 
-Only \`title\` is required. \`priority\` defaults to \`medium\`, \`status\` defaults to \`todo\`.
+Only \`title\` is required. \`priority\` defaults to \`medium\`. If you skip \`columnId\`, the task lands in the first column of the board.
 
 \`\`\`bash
 curl -s -X POST "{{API_BASE_URL}}/api/boards/<boardId>/tasks" \\
@@ -114,25 +121,26 @@ curl -s -X POST "{{API_BASE_URL}}/api/boards/<boardId>/tasks" \\
     "title": "Write launch announcement",
     "description": "Draft the blog post and social copy",
     "priority": "high",
-    "status": "doing"
+    "columnId": "<columnId>"
   }'
 \`\`\`
 
-### Edit a task (also moves status)
+### Edit a task (also moves between columns)
 
-Send any subset of \`{ title, description, priority, status }\`. To "move" a task, send \`{ "status": "done" }\` (or \`"todo"\`/\`"doing"\`).
+Send any subset of \`{ title, description, priority, columnId }\`. To "move" a task to another column, send \`{ "columnId": "<targetColumnId>" }\`.
 
 \`\`\`bash
 curl -s -X PATCH "{{API_BASE_URL}}/api/boards/<boardId>/tasks/<taskId>" \\
   -H "Authorization: Bearer {{ZB_API_KEY}}" \\
   -H "Content-Type: application/json" \\
-  -d '{ "status": "done" }'
+  -d '{ "columnId": "<targetColumnId>" }'
 \`\`\`
 
 ## Workflow tips
 
 - Resolve the target board first via "List boards"; let the user pick one if multiple match.
-- For a "complete this task" request, use the edit endpoint with \`{ "status": "done" }\`.
+- Discover available columns with "List columns" before moving tasks — column ids vary by board.
+- For a "complete this task" request, find the last column ("Done"-like) and PATCH the task with that \`columnId\`.
 - Never try to delete tasks from this skill — that operation is intentionally not exposed.
 `
 
