@@ -2,6 +2,7 @@ import { db, boards } from "./db";
 import { Board } from "./entities";
 import { and, eq } from "drizzle-orm";
 import { ulid } from "ulid";
+import { columnService } from "./columns";
 
 type BoardUpdate = {
   name?: string;
@@ -22,6 +23,8 @@ class BoardService {
     };
 
     const [inserted] = await db.insert(boards).values(newBoard).returning();
+
+    await columnService.ensureForUser(userId);
 
     return {
       ...inserted,

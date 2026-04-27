@@ -9,24 +9,25 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core"
-import { Status, Task } from "@repo/core"
+import { Column as ColumnEntity, Task } from "@repo/core"
 
 import { Column } from "./Column"
 import { Card } from "./Card"
-import { COLUMNS } from "./constants"
 
 interface KanbanBoardProps {
   tasks: Task[]
+  columns: ColumnEntity[]
   boardId: string
-  onMove: (taskId: string, newStatus: Status) => void
-  getTasksByStatus: (status: Status) => Task[]
+  onMove: (taskId: string, newColumnId: string) => void
+  getTasksByColumn: (columnId: string) => Task[]
 }
 
 export function KanbanBoard({
   tasks,
+  columns,
   boardId,
   onMove,
-  getTasksByStatus,
+  getTasksByColumn,
 }: KanbanBoardProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -48,11 +49,11 @@ export function KanbanBoard({
     if (!over) return
 
     const taskId = active.id as string
-    const newStatus = over.id as Status
+    const newColumnId = over.id as string
 
     const task = tasks.find((t) => t.id === taskId)
-    if (task && task.status !== newStatus) {
-      onMove(taskId, newStatus)
+    if (task && task.columnId !== newColumnId) {
+      onMove(taskId, newColumnId)
     }
   }
 
@@ -63,13 +64,13 @@ export function KanbanBoard({
       onDragEnd={handleDragEnd}
     >
       <div className="flex gap-6 overflow-x-auto pb-4">
-        {COLUMNS.map((column) => (
+        {columns.map((column) => (
           <Column
             key={column.id}
             id={column.id}
-            title={column.title}
-            dotClass={column.dotClass}
-            tasks={getTasksByStatus(column.id)}
+            title={column.name}
+            dotClass={column.color}
+            tasks={getTasksByColumn(column.id)}
             boardId={boardId}
           />
         ))}

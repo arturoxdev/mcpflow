@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { boardService, taskService } from '@repo/core'
+import { boardService, columnService, taskService } from '@repo/core'
 
 const TITLE_MAX = 120
 const DESC_MAX = 5000
@@ -33,11 +33,17 @@ export async function POST(
     return NextResponse.json({ error: `Description is too long (max ${DESC_MAX} chars)` }, { status: 400 })
   }
 
+  const userColumns = await columnService.ensureForUser(board.userId)
+  const firstColumn = userColumns[0]
+  if (!firstColumn) {
+    return NextResponse.json({ error: 'No columns configured' }, { status: 500 })
+  }
+
   await taskService.create({
     title: rawTitle,
     description: rawDescription,
     priority: 'medium',
-    status: 'todo',
+    columnId: firstColumn.id,
     source: 'external',
     createdBy: null,
     boardId,

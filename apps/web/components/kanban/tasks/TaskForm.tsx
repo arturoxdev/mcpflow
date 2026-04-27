@@ -98,7 +98,6 @@ export function TaskForm({
               title: values.title.trim(),
               description: values.description.trim(),
               priority: values.priority,
-              status: task.status,
             }),
           }
         )
@@ -110,7 +109,6 @@ export function TaskForm({
             title: values.title.trim(),
             description: values.description.trim(),
             priority: values.priority,
-            status: "todo",
           }),
         })
       }

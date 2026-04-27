@@ -14,7 +14,6 @@ import { BoardList } from "@/components/board/BoardList"
 import { SharePublicInboxPopover } from "@/components/board/SharePublicInboxPopover"
 import { KanbanBoard } from "@/components/kanban"
 import { useKanban } from "@/components/kanban/hooks/useKanban"
-import { COLUMNS } from "@/components/kanban/constants"
 import { useBreadcrumb } from "@/hooks/use-breadcrumb"
 import { usePageAction } from "@/hooks/use-page-action"
 import { boardsStore } from "@/lib/boards-store"
@@ -34,10 +33,11 @@ export default function BoardPage({ params }: BoardPageProps) {
 
   const {
     tasks,
+    columns,
     isLoading: areTasksLoading,
     error: tasksError,
     moveTask,
-    getTasksByStatus,
+    getTasksByColumn,
   } = useKanban({ boardId })
 
   useEffect(() => {
@@ -103,7 +103,10 @@ export default function BoardPage({ params }: BoardPageProps) {
     )
   }
 
-  const doneCount = tasks.filter((t) => t.status === "done").length
+  const lastColumnId = columns.length > 0 ? columns[columns.length - 1]!.id : null
+  const doneCount = lastColumnId
+    ? tasks.filter((t) => t.columnId === lastColumnId).length
+    : 0
 
   const handleRename = async (newName: string) => {
     const res = await fetch(`/api/boards/${boardId}`, {
@@ -140,7 +143,7 @@ export default function BoardPage({ params }: BoardPageProps) {
 
       {areTasksLoading ? (
         <div className="flex gap-6">
-          {COLUMNS.map((c) => (
+          {(columns.length > 0 ? columns : [{ id: "a" }, { id: "b" }, { id: "c" }]).map((c) => (
             <Skeleton key={c.id} className="h-64 w-1/3 rounded-xl" />
           ))}
         </div>
@@ -150,13 +153,19 @@ export default function BoardPage({ params }: BoardPageProps) {
           <AlertDescription>{tasksError}</AlertDescription>
         </Alert>
       ) : view === "lista" ? (
-        <BoardList tasks={tasks} boardId={boardId} onMove={moveTask} />
+        <BoardList
+          tasks={tasks}
+          columns={columns}
+          boardId={boardId}
+          onMove={moveTask}
+        />
       ) : (
         <KanbanBoard
           tasks={tasks}
+          columns={columns}
           boardId={boardId}
           onMove={moveTask}
-          getTasksByStatus={getTasksByStatus}
+          getTasksByColumn={getTasksByColumn}
         />
       )}
     </div>

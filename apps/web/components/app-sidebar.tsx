@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAuth, useUser, UserButton } from "@clerk/nextjs"
-import { BookOpen, KeyRound, Sparkles } from "lucide-react"
+import { BookOpen, KeyRound, Settings, Sparkles } from "lucide-react"
 import type { Board, Task } from "@repo/core"
 
 import {
@@ -208,6 +208,16 @@ export function AppSidebar() {
                 >
                   <Sparkles className="size-4" />
                   <span>Skill</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={pathname.startsWith("/settings")}
+                  tooltip="Settings"
+                  render={<Link href="/settings/zenboard-flow" />}
+                >
+                  <Settings className="size-4" />
+                  <span>Settings</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

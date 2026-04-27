@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { useAuth } from "@clerk/nextjs"
-import type { Board, Status, Task } from "@repo/core"
+import type { Board, Column, Task } from "@repo/core"
 import { toast } from "sonner"
 
 import { ArrowDown, ArrowUp } from "lucide-react"
@@ -44,6 +44,7 @@ export default function GeneralPage() {
   const { getToken } = useAuth()
   const [tasks, setTasks] = useState<Task[]>([])
   const [boards, setBoards] = useState<Board[]>([])
+  const [columns, setColumns] = useState<Column[]>([])
   const [selectedBoardIds, setSelectedBoardIds] = useState<string[]>([])
   const [sortField, setSortField] = useState<SortField>("created")
   const [sortDir, setSortDir] = useState<SortDir>("desc")
@@ -56,15 +57,22 @@ export default function GeneralPage() {
       try {
         const token = await getToken()
         const headers = { Authorization: `Bearer ${token}` }
-        const [tRes, bRes] = await Promise.all([
+        const [tRes, bRes, cRes] = await Promise.all([
           fetch("/api/tasks", { headers }),
           fetch("/api/boards", { headers }),
+          fetch("/api/columns", { headers }),
         ])
-        if (!tRes.ok || !bRes.ok) throw new Error("Failed to load data")
-        const [tData, bData] = await Promise.all([tRes.json(), bRes.json()])
+        if (!tRes.ok || !bRes.ok || !cRes.ok)
+          throw new Error("Failed to load data")
+        const [tData, bData, cData] = await Promise.all([
+          tRes.json(),
+          bRes.json(),
+          cRes.json(),
+        ])
         if (!cancelled) {
           setTasks(tData)
           setBoards(bData)
+          setColumns(cData)
         }
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Unknown error")
@@ -97,19 +105,18 @@ export default function GeneralPage() {
       if (sortField === "priority") {
         return (PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority]) * dir
       }
-      // ULIDs son lexicográficamente ordenables por timestamp de creación
       return a.id.localeCompare(b.id) * dir
     })
   }, [tasks, selectedBoardIds, sortField, sortDir])
 
-  const handleMove = async (taskId: string, newStatus: Status) => {
+  const handleMove = async (taskId: string, newColumnId: string) => {
     const task = tasks.find((t) => t.id === taskId)
     if (!task) return
-    const previousStatus = task.status
+    const previousColumnId = task.columnId
     const boardId = task.boardId
 
     setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
+      prev.map((t) => (t.id === taskId ? { ...t, columnId: newColumnId } : t))
     )
 
     try {
@@ -120,13 +127,13 @@ export default function GeneralPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ columnId: newColumnId }),
       })
       if (!res.ok) throw new Error("Failed to update")
       tasksStore.notify()
     } catch {
       setTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? { ...t, status: previousStatus } : t))
+        prev.map((t) => (t.id === taskId ? { ...t, columnId: previousColumnId } : t))
       )
       toast.error("No se pudo mover la task")
     }
@@ -197,12 +204,14 @@ export default function GeneralPage() {
       {view === "lista" ? (
         <BoardList
           tasks={filteredTasks}
+          columns={columns}
           boardNameById={boardNameById}
           onMove={handleMove}
         />
       ) : (
         <GeneralKanban
           tasks={filteredTasks}
+          columns={columns}
           boardNameById={boardNameById}
           onMove={handleMove}
         />

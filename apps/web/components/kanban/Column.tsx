@@ -3,13 +3,13 @@
 import Link from "next/link"
 import { Plus } from "lucide-react"
 import { useDroppable } from "@dnd-kit/core"
-import { Task, Status } from "@repo/core"
+import { Task } from "@repo/core"
 
 import { cn } from "@/lib/utils"
 import { Card } from "./Card"
 
 interface ColumnProps {
-  id: Status
+  id: string
   title: string
   dotClass: string
   tasks: Task[]
@@ -30,7 +30,7 @@ export function Column({
   const { setNodeRef, isOver } = useDroppable({ id })
   const count = String(tasks.length).padStart(2, "0")
   const newTaskHref = boardId
-    ? `/boards/tasks/new?boardId=${boardId}`
+    ? `/boards/tasks/new?boardId=${boardId}&columnId=${id}`
     : null
 
   return (
