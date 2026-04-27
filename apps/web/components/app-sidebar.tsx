@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAuth, useUser, UserButton } from "@clerk/nextjs"
-import { BookOpen, KeyRound } from "lucide-react"
+import { BookOpen, KeyRound, Sparkles } from "lucide-react"
 import type { Board, Task } from "@repo/core"
 
 import {
@@ -198,6 +198,16 @@ export function AppSidebar() {
                 >
                   <BookOpen className="size-4" />
                   <span>API Docs</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={pathname === "/skill"}
+                  tooltip="Skill"
+                  render={<Link href="/skill" />}
+                >
+                  <Sparkles className="size-4" />
+                  <span>Skill</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
