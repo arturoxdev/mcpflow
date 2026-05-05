@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useLayoutEffect, useRef, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
@@ -79,6 +79,16 @@ export function TaskForm({
   })
 
   const isDirty = form.formState.isDirty
+
+  const titleRef = useRef<HTMLTextAreaElement>(null)
+  const titleValue = form.watch("title")
+
+  useLayoutEffect(() => {
+    const el = titleRef.current
+    if (!el) return
+    el.style.height = "auto"
+    el.style.height = `${el.scrollHeight}px`
+  }, [titleValue])
 
   const onSubmit = async (values: TaskFormValues) => {
     if (!selectedBoardId) {
@@ -256,18 +266,28 @@ export function TaskForm({
         name="title"
         render={({ field, fieldState }) => (
           <div className="mb-6">
-            <input
-              type="text"
+            <textarea
+              ref={titleRef}
+              rows={1}
+              wrap="soft"
               autoFocus
               placeholder="Título de la tarea"
               className={cn(
-                "text-foreground placeholder:text-muted-foreground/50 w-full border-none bg-transparent p-0 text-3xl font-medium leading-tight tracking-tight outline-none",
+                "text-foreground placeholder:text-muted-foreground/50 field-sizing-content w-full resize-none overflow-hidden whitespace-pre-wrap break-words border-none bg-transparent p-0 text-3xl font-medium leading-tight tracking-tight outline-none",
                 fieldState.error && "text-destructive"
               )}
-              {...field}
+              value={field.value ?? ""}
+              name={field.name}
+              onBlur={field.onBlur}
               onChange={(e) => {
-                field.onChange(e)
-                onTitleChange?.(e.target.value)
+                const next = e.target.value.replace(/\n/g, "")
+                field.onChange(next)
+                onTitleChange?.(next)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                }
               }}
             />
             {fieldState.error && (
@@ -344,7 +364,7 @@ export function TaskForm({
         )}
       />
 
-      <div className="border-border mt-10 flex flex-wrap items-center gap-3 border-t pt-5">
+      <div className="border-border bg-background sticky bottom-0 z-10 mt-10 flex flex-wrap items-center gap-3 border-t py-5">
         {onDelete && (
           <Dialog
             open={showDeleteDialog}
