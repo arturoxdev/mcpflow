@@ -73,9 +73,22 @@ Task:
   title: string
   description: string
   priority: 'low' | 'medium' | 'high'
-  columnId: string   // FK to board column (use /api/boards/<id>/columns to list)
+  columnId: string   // FK to a column (columns are global per user — list with GET /api/columns)
   boardId: string
   pr: number         // correlative number inside the board
+}
+\`\`\`
+
+Column:
+
+\`\`\`ts
+{
+  id: string         // ULID
+  userId: string
+  name: string       // e.g. "To Do", "Doing", "Done"
+  color: string      // tailwind class, e.g. "bg-muted"
+  position: number   // 0-indexed display order
+  createdAt: string  // ISO 8601
 }
 \`\`\`
 
@@ -102,12 +115,32 @@ curl -s "{{API_BASE_URL}}/api/boards/<boardId>/tasks/<taskId>" \\
   -H "Authorization: Bearer {{ZB_API_KEY}}"
 \`\`\`
 
-### List columns of a board
+### List columns
+
+Columns are global per user (the same set is shared across every board). Use this to discover the \`columnId\` you need for moving or filtering tasks.
 
 \`\`\`bash
-curl -s "{{API_BASE_URL}}/api/boards/<boardId>/columns" \\
+curl -s "{{API_BASE_URL}}/api/columns" \\
   -H "Authorization: Bearer {{ZB_API_KEY}}"
 \`\`\`
+
+### List tasks in a column (across all boards)
+
+Returns every task in the given column, from any of the user's boards. Each task includes a \`boardName\` field so you can show which board it belongs to without an extra lookup. Use this when the user asks things like "show me all my Doing tasks" without specifying a board.
+
+\`\`\`bash
+curl -s "{{API_BASE_URL}}/api/columns/<columnId>/tasks" \\
+  -H "Authorization: Bearer {{ZB_API_KEY}}"
+\`\`\`
+
+Response shape:
+
+\`\`\`ts
+Array<Task & { boardName: string }>
+// ordered by boardId, then pr
+\`\`\`
+
+Returns 404 \`{ error: "Column not found" }\` if the \`columnId\` does not belong to the user.
 
 ### Create a task
 
@@ -139,8 +172,11 @@ curl -s -X PATCH "{{API_BASE_URL}}/api/boards/<boardId>/tasks/<taskId>" \\
 ## Workflow tips
 
 - Resolve the target board first via "List boards"; let the user pick one if multiple match.
-- Discover available columns with "List columns" before moving tasks — column ids vary by board.
+- Columns are global per user — call "List columns" once at the start of the session and reuse the ids for the rest of the conversation.
+- To translate a column name the user said (e.g. "doing", "done") into a \`columnId\`, match case-insensitively against the names from "List columns". If there's no match, list the available column names back to the user and ask which one they meant — never invent a column or create one without explicit confirmation.
 - For a "complete this task" request, find the last column ("Done"-like) and PATCH the task with that \`columnId\`.
+- For "show me my <column> tasks" without a board, use "List tasks in a column (across all boards)" — it already includes \`boardName\` per task.
+- For "show me my <column> tasks in <board>", combine: resolve the board, then GET /api/boards/<boardId>/tasks and filter client-side by \`columnId\`.
 - Never try to delete tasks from this skill — that operation is intentionally not exposed.
 `
 

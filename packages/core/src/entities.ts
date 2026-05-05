@@ -57,6 +57,8 @@ export type CreateTask = z.infer<typeof CreateTaskSchema>
 export type Task = z.infer<typeof TaskSchema>
 export type Priority = Task['priority']
 
+export type TaskWithBoard = Task & { boardName: string }
+
 const ApiKeySchema = z.object({
     id: z.string(),
     userId: z.string(),

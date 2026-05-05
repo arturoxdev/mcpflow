@@ -1,6 +1,6 @@
-import { CreateTask, Task } from "./entities";
-import { db, tasks } from "./db";
-import { eq, and, max } from "drizzle-orm";
+import { CreateTask, Task, TaskWithBoard } from "./entities";
+import { db, tasks, boards } from "./db";
+import { eq, and, asc, max } from "drizzle-orm";
 import { ulid } from "ulid";
 
 class TaskService {
@@ -44,6 +44,30 @@ class TaskService {
 
   getAllByUser = async (userId: string): Promise<Task[]> => {
     return db.select().from(tasks).where(eq(tasks.userId, userId));
+  };
+
+  getByColumn = async (
+    columnId: string,
+    userId: string
+  ): Promise<TaskWithBoard[]> => {
+    return db
+      .select({
+        id: tasks.id,
+        userId: tasks.userId,
+        title: tasks.title,
+        description: tasks.description,
+        priority: tasks.priority,
+        columnId: tasks.columnId,
+        source: tasks.source,
+        createdBy: tasks.createdBy,
+        boardId: tasks.boardId,
+        pr: tasks.pr,
+        boardName: boards.name,
+      })
+      .from(tasks)
+      .innerJoin(boards, eq(tasks.boardId, boards.id))
+      .where(and(eq(tasks.columnId, columnId), eq(tasks.userId, userId)))
+      .orderBy(asc(tasks.boardId), asc(tasks.pr));
   };
 
   getById = async (
