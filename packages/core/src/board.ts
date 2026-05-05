@@ -1,7 +1,14 @@
 import { db, boards } from "./db";
 import { Board } from "./entities";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { ulid } from "ulid";
+import { columnService } from "./columns";
+
+type BoardUpdate = {
+  name?: string;
+  description?: string;
+  publicInboxEnabled?: boolean;
+};
 
 class BoardService {
   constructor() { }
@@ -17,6 +24,8 @@ class BoardService {
 
     const [inserted] = await db.insert(boards).values(newBoard).returning();
 
+    await columnService.ensureForUser(userId);
+
     return {
       ...inserted,
       createdAt: inserted.createdAt.toISOString(),
@@ -31,8 +40,11 @@ class BoardService {
     }));
   };
 
-  getById = async (id: string): Promise<Board | undefined> => {
-    const [board] = await db.select().from(boards).where(eq(boards.id, id));
+  getById = async (id: string, userId: string): Promise<Board | undefined> => {
+    const [board] = await db
+      .select()
+      .from(boards)
+      .where(and(eq(boards.id, id), eq(boards.userId, userId)));
     if (!board) {
       return undefined;
     }
@@ -42,11 +54,36 @@ class BoardService {
     };
   };
 
-  update = async (id: string, name: string, description?: string): Promise<Board> => {
+  getByIdPublic = async (id: string): Promise<Board | undefined> => {
+    const [board] = await db
+      .select()
+      .from(boards)
+      .where(eq(boards.id, id));
+    if (!board) {
+      return undefined;
+    }
+    return {
+      ...board,
+      createdAt: board.createdAt.toISOString(),
+    };
+  };
+
+  update = async (id: string, userId: string, patch: BoardUpdate): Promise<Board> => {
+    const setPayload: Record<string, unknown> = {};
+    if (typeof patch.name === "string") setPayload.name = patch.name;
+    if (typeof patch.description === "string") setPayload.description = patch.description;
+    if (typeof patch.publicInboxEnabled === "boolean") setPayload.publicInboxEnabled = patch.publicInboxEnabled;
+
+    if (Object.keys(setPayload).length === 0) {
+      const current = await this.getById(id, userId);
+      if (!current) throw new Error('Board not found');
+      return current;
+    }
+
     const [updated] = await db
       .update(boards)
-      .set({ name, description: description || '' })
-      .where(eq(boards.id, id))
+      .set(setPayload)
+      .where(and(eq(boards.id, id), eq(boards.userId, userId)))
       .returning();
 
     if (!updated) {
@@ -59,8 +96,11 @@ class BoardService {
     };
   };
 
-  delete = async (id: string): Promise<void> => {
-    const result = await db.delete(boards).where(eq(boards.id, id)).returning();
+  delete = async (id: string, userId: string): Promise<void> => {
+    const result = await db
+      .delete(boards)
+      .where(and(eq(boards.id, id), eq(boards.userId, userId)))
+      .returning();
     if (result.length === 0) {
       throw new Error('Board not found');
     }

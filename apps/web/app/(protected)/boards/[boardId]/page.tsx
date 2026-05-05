@@ -1,10 +1,22 @@
-'use client'
+"use client"
 
-import { useState, useEffect, use } from 'react'
-import Link from 'next/link'
-import { KanbanBoard } from '@/components/kanban'
-import { Board } from '@repo/core'
-import { ChevronLeft, MoveLeft } from 'lucide-react'
+import { use, useEffect, useState } from "react"
+import Link from "next/link"
+import { useSearchParams } from "next/navigation"
+import { toast } from "sonner"
+import { Board } from "@repo/core"
+
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
+import { BoardHeader } from "@/components/board/BoardHeader"
+import { BoardList } from "@/components/board/BoardList"
+import { SharePublicInboxPopover } from "@/components/board/SharePublicInboxPopover"
+import { KanbanBoard } from "@/components/kanban"
+import { useKanban } from "@/components/kanban/hooks/useKanban"
+import { useBreadcrumb } from "@/hooks/use-breadcrumb"
+import { usePageAction } from "@/hooks/use-page-action"
+import { boardsStore } from "@/lib/boards-store"
 
 interface BoardPageProps {
   params: Promise<{ boardId: string }>
@@ -12,64 +24,150 @@ interface BoardPageProps {
 
 export default function BoardPage({ params }: BoardPageProps) {
   const { boardId } = use(params)
+  const searchParams = useSearchParams()
+  const view = searchParams.get("view") === "lista" ? "lista" : "kanban"
+
   const [board, setBoard] = useState<Board | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isBoardLoading, setIsBoardLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const {
+    tasks,
+    columns,
+    isLoading: areTasksLoading,
+    error: tasksError,
+    moveTask,
+    getTasksByColumn,
+  } = useKanban({ boardId })
 
   useEffect(() => {
     const fetchBoard = async () => {
       try {
         const response = await fetch(`/api/boards/${boardId}`)
-        if (!response.ok) {
-          throw new Error('Board not found')
-        }
+        if (!response.ok) throw new Error("Board not found")
         const data = await response.json()
         setBoard(data)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load board')
+        setError(err instanceof Error ? err.message : "Failed to load board")
       } finally {
-        setIsLoading(false)
+        setIsBoardLoading(false)
       }
     }
 
     fetchBoard()
   }, [boardId])
 
-  if (isLoading) {
+  useBreadcrumb(
+    board
+      ? [{ label: "Boards", href: "/boards" }, { label: board.name }]
+      : [{ label: "Boards", href: "/boards" }]
+  )
+
+  usePageAction({
+    primary: {
+      label: "Nueva tarea",
+      href: `/boards/tasks/new?boardId=${boardId}`,
+    },
+  })
+
+  if (isBoardLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-400">Loading board...</div>
+      <div className="flex flex-col gap-6">
+        <Skeleton className="h-5 w-48" />
+        <Skeleton className="h-10 w-64" />
+        <div className="flex gap-6">
+          <Skeleton className="h-64 w-1/3 rounded-xl" />
+          <Skeleton className="h-64 w-1/3 rounded-xl" />
+          <Skeleton className="h-64 w-1/3 rounded-xl" />
+        </div>
       </div>
     )
   }
 
   if (error || !board) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <div className="text-red-400">{error || 'Board not found'}</div>
-        <Link
-          href="/boards"
-          className="text-blue-400 hover:text-blue-300 transition-colors"
+      <div className="flex flex-col gap-4">
+        <Alert variant="destructive">
+          <AlertTitle>Board no encontrado</AlertTitle>
+          <AlertDescription>{error || "Board not found"}</AlertDescription>
+        </Alert>
+        <Button
+          render={<Link href="/boards" />}
+          nativeButton={false}
+          variant="outline"
+          className="self-start"
         >
-          ← Back to boards
-        </Link>
+          Back to boards
+        </Button>
       </div>
     )
   }
 
-  return (
-    <div>
-      <div className="mb-6">
+  const lastColumnId = columns.length > 0 ? columns[columns.length - 1]!.id : null
+  const doneCount = lastColumnId
+    ? tasks.filter((t) => t.columnId === lastColumnId).length
+    : 0
 
-        <Link
-          href="/boards"
-          className="text-sm flex text-gray-400 hover:text-white transition-colors"
-        >
-          <span><ChevronLeft /></span>
-          <span className='content-center'>Back to boards</span>
-        </Link>
-      </div>
-      <KanbanBoard boardId={boardId} boardName={board.name} />
+  const handleRename = async (newName: string) => {
+    const res = await fetch(`/api/boards/${boardId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newName }),
+    })
+    if (!res.ok) throw new Error("Failed to rename")
+    const updated = (await res.json()) as Board
+    setBoard(updated)
+    boardsStore.notify()
+    toast.success("Nombre actualizado")
+  }
+
+  return (
+    <div className="flex h-full flex-col gap-8">
+      <BoardHeader
+        name={board.name}
+        done={doneCount}
+        total={tasks.length}
+        onRename={handleRename}
+        action={
+          <SharePublicInboxPopover
+            boardId={boardId}
+            initialEnabled={board.publicInboxEnabled}
+            onChange={(next) =>
+              setBoard((current) =>
+                current ? { ...current, publicInboxEnabled: next } : current
+              )
+            }
+          />
+        }
+      />
+
+      {areTasksLoading ? (
+        <div className="flex gap-6">
+          {(columns.length > 0 ? columns : [{ id: "a" }, { id: "b" }, { id: "c" }]).map((c) => (
+            <Skeleton key={c.id} className="h-64 w-1/3 rounded-xl" />
+          ))}
+        </div>
+      ) : tasksError ? (
+        <Alert variant="destructive">
+          <AlertTitle>Error al cargar las tareas</AlertTitle>
+          <AlertDescription>{tasksError}</AlertDescription>
+        </Alert>
+      ) : view === "lista" ? (
+        <BoardList
+          tasks={tasks}
+          columns={columns}
+          boardId={boardId}
+          onMove={moveTask}
+        />
+      ) : (
+        <KanbanBoard
+          tasks={tasks}
+          columns={columns}
+          boardId={boardId}
+          onMove={moveTask}
+          getTasksByColumn={getTasksByColumn}
+        />
+      )}
     </div>
   )
 }

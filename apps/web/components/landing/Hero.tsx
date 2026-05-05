@@ -1,84 +1,83 @@
+import Link from "next/link"
+import { BrandMark } from "@/components/brand-mark"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+
 export function Hero() {
   return (
-    <section className="relative flex min-h-screen flex-col items-center justify-center px-8 pb-16 pt-32 text-center">
-      {/* Gradient orbs */}
+    <section className="relative flex min-h-screen flex-col items-center justify-center px-8 pt-32 pb-16 text-center">
       <div
-        className="pointer-events-none absolute left-[10%] top-[10%] h-[600px] w-[600px] blur-[60px]"
+        className="pointer-events-none absolute top-[10%] left-[10%] h-[600px] w-[600px] blur-[60px]"
         style={{
-          background: 'radial-gradient(circle, rgba(124, 124, 252, 0.08) 0%, transparent 70%)'
+          background:
+            "radial-gradient(circle, rgba(46, 103, 255, 0.12) 0%, transparent 70%)",
         }}
       />
       <div
-        className="pointer-events-none absolute bottom-[20%] right-[5%] h-[500px] w-[500px] blur-[60px]"
+        className="pointer-events-none absolute right-[5%] bottom-[20%] h-[500px] w-[500px] blur-[60px]"
         style={{
-          background: 'radial-gradient(circle, rgba(239, 68, 68, 0.05) 0%, transparent 70%)'
+          background:
+            "radial-gradient(circle, rgba(255, 108, 53, 0.06) 0%, transparent 70%)",
         }}
       />
 
-      {/* Content */}
-      <div className="relative z-10">
-        {/* Badge */}
+      <div className="relative z-10 flex flex-col items-center gap-8">
         <div
-          className="mb-8 inline-flex items-center gap-2 rounded-[100px] border border-[var(--border-subtle)] bg-[var(--bg-secondary)] px-4 py-2 text-[0.8rem] text-[var(--text-secondary)]"
-          style={{
-            animation: 'fadeInUp 0.8s ease forwards'
-          }}
+          className="flex justify-center"
+          style={{ animation: "fadeInUp 0.8s ease forwards", opacity: 0 }}
         >
-          <span
-            className="h-1.5 w-1.5 rounded-full bg-[var(--status-done)]"
-            style={{
-              animation: 'pulse 2s infinite'
-            }}
-          />
-          <span>Nuevo: Integración con MCP para agentes de IA</span>
+          <BrandMark className="size-20" />
         </div>
+        <Badge
+          variant="outline"
+          className="animate-[fadeInUp_0.8s_ease_forwards] gap-2 rounded-full px-4 py-2"
+        >
+          <span className="bg-chart-4 inline-block size-1.5 animate-[pulse_2s_infinite] rounded-full" />
+          <span className="text-muted-foreground text-[0.8rem]">
+            Nuevo: Integración con MCP para agentes de IA
+          </span>
+        </Badge>
 
-        {/* Main Title */}
         <h1
-          className="mb-6 max-w-[900px] text-[clamp(3rem,8vw,6rem)] font-normal leading-[1.05] tracking-[-0.03em]"
+          className="max-w-[900px] font-serif text-[clamp(3rem,8vw,6rem)] leading-[1.05] font-normal tracking-[-0.03em]"
           style={{
-            fontFamily: 'var(--font-instrument-serif)',
-            animation: 'fadeInUp 0.8s ease 0.1s forwards',
-            opacity: 0
+            animation: "fadeInUp 0.8s ease 0.1s forwards",
+            opacity: 0,
           }}
         >
-          Gestiona tus proyectos con <em className="italic text-indigo-400">claridad zen</em>
+          Gestiona tus proyectos con{" "}
+          <em className="text-primary italic">claridad zen</em>
         </h1>
 
-        {/* Subtitle */}
         <p
-          className="mb-12 mx-auto max-w-[600px] text-[1.25rem] text-[var(--text-secondary)]"
+          className="text-muted-foreground mx-auto max-w-[600px] text-[1.25rem]"
           style={{
-            animation: 'fadeInUp 0.8s ease 0.2s forwards',
-            opacity: 0
+            animation: "fadeInUp 0.8s ease 0.2s forwards",
+            opacity: 0,
           }}
         >
-          Un tablero Kanban minimalista y potente. Organiza tareas, colabora con tu equipo y deja que la IA te ayude a mantener el flujo.
+          Un tablero Kanban minimalista y potente. Organiza tareas, colabora con
+          tu equipo y deja que la IA te ayude a mantener el flujo.
         </p>
 
-        {/* CTAs */}
         <div
           className="flex justify-center gap-4"
           style={{
-            animation: 'fadeInUp 0.8s ease 0.3s forwards',
-            opacity: 0
+            animation: "fadeInUp 0.8s ease 0.3s forwards",
+            opacity: 0,
           }}
         >
-          <a
-            href="/boards"
-            className="rounded-lg bg-indigo-400 px-6 py-3 text-[0.9rem] font-medium text-white transition-all duration-200 hover:-translate-y-0.5"
-            style={{
-              boxShadow: '0 0 30px var(--accent-indigo-glow)'
-            }}
-          >
+          <Button render={<Link href="/boards" />} nativeButton={false} size="lg">
             Crear mi primer board
-          </a>
-          <a
-            href="#preview"
-            className="rounded-lg border border-[var(--border-hover)] bg-transparent px-6 py-3 text-[0.9rem] font-medium text-[var(--text-primary)] transition-all duration-200 hover:border-[var(--text-secondary)] hover:bg-[rgba(255,255,255,0.05)]"
+          </Button>
+          <Button
+            render={<Link href="#preview" />}
+            nativeButton={false}
+            variant="outline"
+            size="lg"
           >
             Ver demo
-          </a>
+          </Button>
         </div>
       </div>
     </section>

@@ -1,50 +1,42 @@
-'use client'
+import Link from "next/link"
+import { BrandMark } from "@/components/brand-mark"
+import { Button } from "@/components/ui/button"
 
 export function Navigation() {
   return (
-    <nav className="w-4/5 mx-auto fixed left-0 right-0 top-0 z-[100] flex items-center justify-between px-16 py-6 backdrop-blur-[10px]" style={{
-      background: 'linear-gradient(to bottom, var(--bg-primary) 0%, transparent 100%)'
-    }}>
-      {/* Logo */}
-      <div className="text-[1.75rem] italic font-bold tracking-[-0.02em]" style={{ fontFamily: 'var(--font-instrument-serif)' }}>
-        MCP<span className="italic text-[var(--accent-indigo)]">Flow</span>
-      </div>
+    <nav className="fixed top-0 right-0 left-0 z-[100] mx-auto flex w-4/5 items-center justify-between bg-gradient-to-b from-background to-transparent px-16 py-6 backdrop-blur-[10px]">
+      <Link
+        href="/"
+        className="flex items-center gap-2 font-serif text-[1.75rem] font-bold italic tracking-[-0.02em]"
+      >
+        <BrandMark className="size-8" />
+        <span>
+          Zen<span className="text-primary italic">Board</span>
+        </span>
+      </Link>
 
-      {/* Navigation Links */}
       <div className="flex items-center gap-10">
-        <a
+        <Link
           href="#features"
-          className="text-[0.9rem] font-normal text-[var(--text-secondary)] transition-colors duration-200 hover:text-[var(--text-primary)]"
+          className="text-muted-foreground hover:text-foreground text-[0.9rem] transition-colors duration-200"
         >
           Características
-        </a>
-        <a
+        </Link>
+        <Link
           href="#integracion"
-          className="text-[0.9rem] font-normal text-[var(--text-secondary)] transition-colors duration-200 hover:text-[var(--text-primary)]"
+          className="text-muted-foreground hover:text-foreground text-[0.9rem] transition-colors duration-200"
         >
           Integración
-        </a>
-        <a
+        </Link>
+        <Link
           href="#precios"
-          className="text-[0.9rem] font-normal text-[var(--text-secondary)] transition-colors duration-200 hover:text-[var(--text-primary)]"
+          className="text-muted-foreground hover:text-foreground text-[0.9rem] transition-colors duration-200"
         >
           Precios
-        </a>
-        <a
-          href="/boards"
-          className="rounded-lg bg-[var(--accent-indigo)] px-6 py-3 text-[0.9rem] font-medium text-white transition-all duration-200 hover:-translate-y-0.5"
-          style={{
-            boxShadow: '0 0 30px var(--accent-indigo-glow)'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow = '0 0 40px rgba(124, 124, 252, 0.3)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = '0 0 30px var(--accent-indigo-glow)'
-          }}
-        >
+        </Link>
+        <Button render={<Link href="/general" />} nativeButton={false} size="lg">
           Comenzar gratis
-        </a>
+        </Button>
       </div>
     </nav>
   )

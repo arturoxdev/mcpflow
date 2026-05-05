@@ -15,6 +15,34 @@
       "when": 1768933840320,
       "tag": "0001_moaning_red_hulk",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777162901214,
+      "tag": "0002_gigantic_cardiac",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1777167271254,
+      "tag": "0003_silly_misty_knight",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1777330129450,
+      "tag": "0004_cloudy_risque",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1777331607942,
+      "tag": "0005_thin_changeling",
+      "breakpoints": true
     }
   ]
 }

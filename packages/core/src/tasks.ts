@@ -23,7 +23,9 @@ class TaskService {
       title: task.title,
       description: task.description,
       priority: task.priority,
-      status: task.status,
+      columnId: task.columnId,
+      source: task.source ?? 'internal',
+      createdBy: task.createdBy ?? null,
       boardId: task.boardId,
       userId: task.userId,
       pr,
@@ -33,29 +35,57 @@ class TaskService {
     return inserted;
   };
 
-  getAll = async (boardId: string): Promise<Task[]> => {
-    return db.select().from(tasks).where(eq(tasks.boardId, boardId));
+  getAll = async (boardId: string, userId: string): Promise<Task[]> => {
+    return db
+      .select()
+      .from(tasks)
+      .where(and(eq(tasks.boardId, boardId), eq(tasks.userId, userId)));
   };
 
-  getById = async (id: string, boardId: string): Promise<Task | undefined> => {
+  getAllByUser = async (userId: string): Promise<Task[]> => {
+    return db.select().from(tasks).where(eq(tasks.userId, userId));
+  };
+
+  getById = async (
+    id: string,
+    boardId: string,
+    userId: string
+  ): Promise<Task | undefined> => {
     const [task] = await db
       .select()
       .from(tasks)
-      .where(and(eq(tasks.id, id), eq(tasks.boardId, boardId)));
+      .where(
+        and(
+          eq(tasks.id, id),
+          eq(tasks.boardId, boardId),
+          eq(tasks.userId, userId)
+        )
+      );
 
     return task;
   };
 
-  update = async (id: string, boardId: string, task: CreateTask): Promise<Task> => {
+  update = async (
+    id: string,
+    boardId: string,
+    userId: string,
+    task: CreateTask
+  ): Promise<Task> => {
     const [updated] = await db
       .update(tasks)
       .set({
         title: task.title,
         description: task.description,
         priority: task.priority,
-        status: task.status,
+        columnId: task.columnId,
       })
-      .where(and(eq(tasks.id, id), eq(tasks.boardId, boardId)))
+      .where(
+        and(
+          eq(tasks.id, id),
+          eq(tasks.boardId, boardId),
+          eq(tasks.userId, userId)
+        )
+      )
       .returning();
 
     if (!updated) {
@@ -65,10 +95,20 @@ class TaskService {
     return updated;
   };
 
-  delete = async (id: string, boardId: string): Promise<void> => {
+  delete = async (
+    id: string,
+    boardId: string,
+    userId: string
+  ): Promise<void> => {
     const result = await db
       .delete(tasks)
-      .where(and(eq(tasks.id, id), eq(tasks.boardId, boardId)))
+      .where(
+        and(
+          eq(tasks.id, id),
+          eq(tasks.boardId, boardId),
+          eq(tasks.userId, userId)
+        )
+      )
       .returning();
 
     if (result.length === 0) {
