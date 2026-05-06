@@ -5,11 +5,12 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
+    "test": "npm --workspaces --if-present run test",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "check-types": "npm --workspaces --if-present run check-types",
+    "typecheck": "npm run check-types"
   },
   "devDependencies": {
-    "@ai-hero/sandcastle": "^0.5.7",
     "prettier": "^3.7.4",
     "turbo": "^2.7.5",
     "typescript": "5.9.2"
