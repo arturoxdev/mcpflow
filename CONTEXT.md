@@ -1,6 +1,6 @@
 # Zenboard
 
-Zenboard is a personal task-board platform where users organize work into boards, and AI agents (Cursor, Claude Code) collaborate via an MCP server. This document fixes the language we use across UI, code, and conversations.
+Zenboard is a personal task-board platform where users organize work into boards. AI agents (Cursor, Claude Code, custom scripts) collaborate via the REST API authenticated with personal access tokens (`zb_pat_*`). This document fixes the language we use across UI, code, and conversations.
 
 ## Language
 
@@ -9,7 +9,7 @@ The top-level container of work. A user owns many Boards, each with its own colu
 _Avoid_: project, tablero (used informally — never in code, docs, or copy).
 
 **Archived Board**:
-A Board with `archived_at` set. Invisible from every interface (boards list, `/general`, direct URL, public inbox URL, MCP tools). Not deleted: rows persist for recovery via direct DB intervention. The archive is **one-way** from the user's perspective — there is no "unarchive" UI.
+A Board with `archived_at` set. Invisible from every interface (boards list, `/general`, direct URL, public inbox URL, REST API). Not deleted: rows persist for recovery via direct DB intervention. The archive is **one-way** from the user's perspective — there is no "unarchive" UI.
 _Avoid_: deleted board, hidden board.
 
 **Task**:
@@ -49,8 +49,8 @@ _Avoid_: shared inbox, public form, share link.
 > **Dev:** "If a client still has the **Public Inbox** link, can they keep submitting to an **Archived Board**?"
 > **Domain expert:** "No, the URL returns 404 once the **Board** is archived. We don't flip `publicInboxEnabled` — the underlying state is preserved so an eventual restore brings the inbox back exactly as it was."
 
-> **Dev:** "Can an AI agent via MCP see **Archived Boards**?"
-> **Domain expert:** "No. The filter lives in the service layer (`@repo/core`), so web and MCP both lose visibility automatically."
+> **Dev:** "Can an AI agent see **Archived Boards** via the REST API?"
+> **Domain expert:** "No. The filter lives in `src/server/`, so every consumer (UI pages, REST routes) loses visibility automatically."
 
 ## Flagged ambiguities
 
