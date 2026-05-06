@@ -1,10 +1,21 @@
 import { CreateTask, Task, TaskWithBoard } from "./entities";
 import { db, tasks, boards } from "./db";
-import { eq, and, asc, max } from "drizzle-orm";
+import { eq, and, asc, max, isNull } from "drizzle-orm";
 import { ulid } from "ulid";
 
 class TaskService {
   constructor() { }
+
+  private assertActiveBoard = async (boardId: string, userId: string): Promise<void> => {
+    const [board] = await db
+      .select({ id: boards.id })
+      .from(boards)
+      .where(and(eq(boards.id, boardId), eq(boards.userId, userId), isNull(boards.archivedAt)));
+
+    if (!board) {
+      throw new Error('Board not found');
+    }
+  };
 
   private getNextPrNumber = async (boardId: string): Promise<number> => {
     const result = await db
@@ -16,6 +27,7 @@ class TaskService {
   };
 
   create = async (task: CreateTask): Promise<Task> => {
+    await this.assertActiveBoard(task.boardId, task.userId);
     const pr = await this.getNextPrNumber(task.boardId);
 
     const newTask = {
@@ -37,13 +49,40 @@ class TaskService {
 
   getAll = async (boardId: string, userId: string): Promise<Task[]> => {
     return db
-      .select()
+      .select({
+        id: tasks.id,
+        userId: tasks.userId,
+        title: tasks.title,
+        description: tasks.description,
+        priority: tasks.priority,
+        columnId: tasks.columnId,
+        source: tasks.source,
+        createdBy: tasks.createdBy,
+        boardId: tasks.boardId,
+        pr: tasks.pr,
+      })
       .from(tasks)
-      .where(and(eq(tasks.boardId, boardId), eq(tasks.userId, userId)));
+      .innerJoin(boards, eq(tasks.boardId, boards.id))
+      .where(and(eq(tasks.boardId, boardId), eq(tasks.userId, userId), isNull(boards.archivedAt)));
   };
 
   getAllByUser = async (userId: string): Promise<Task[]> => {
-    return db.select().from(tasks).where(eq(tasks.userId, userId));
+    return db
+      .select({
+        id: tasks.id,
+        userId: tasks.userId,
+        title: tasks.title,
+        description: tasks.description,
+        priority: tasks.priority,
+        columnId: tasks.columnId,
+        source: tasks.source,
+        createdBy: tasks.createdBy,
+        boardId: tasks.boardId,
+        pr: tasks.pr,
+      })
+      .from(tasks)
+      .innerJoin(boards, eq(tasks.boardId, boards.id))
+      .where(and(eq(tasks.userId, userId), isNull(boards.archivedAt)));
   };
 
   getByColumn = async (
@@ -66,7 +105,7 @@ class TaskService {
       })
       .from(tasks)
       .innerJoin(boards, eq(tasks.boardId, boards.id))
-      .where(and(eq(tasks.columnId, columnId), eq(tasks.userId, userId)))
+      .where(and(eq(tasks.columnId, columnId), eq(tasks.userId, userId), isNull(boards.archivedAt)))
       .orderBy(asc(tasks.boardId), asc(tasks.pr));
   };
 
@@ -76,13 +115,26 @@ class TaskService {
     userId: string
   ): Promise<Task | undefined> => {
     const [task] = await db
-      .select()
+      .select({
+        id: tasks.id,
+        userId: tasks.userId,
+        title: tasks.title,
+        description: tasks.description,
+        priority: tasks.priority,
+        columnId: tasks.columnId,
+        source: tasks.source,
+        createdBy: tasks.createdBy,
+        boardId: tasks.boardId,
+        pr: tasks.pr,
+      })
       .from(tasks)
+      .innerJoin(boards, eq(tasks.boardId, boards.id))
       .where(
         and(
           eq(tasks.id, id),
           eq(tasks.boardId, boardId),
-          eq(tasks.userId, userId)
+          eq(tasks.userId, userId),
+          isNull(boards.archivedAt)
         )
       );
 
@@ -95,6 +147,8 @@ class TaskService {
     userId: string,
     task: CreateTask
   ): Promise<Task> => {
+    await this.assertActiveBoard(boardId, userId);
+
     const [updated] = await db
       .update(tasks)
       .set({
@@ -124,6 +178,8 @@ class TaskService {
     boardId: string,
     userId: string
   ): Promise<void> => {
+    await this.assertActiveBoard(boardId, userId);
+
     const result = await db
       .delete(tasks)
       .where(

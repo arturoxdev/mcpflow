@@ -43,6 +43,13 @@
       "when": 1777331607942,
       "tag": "0005_thin_changeling",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1777958268077,
+      "tag": "0006_boring_christian_walker",
+      "breakpoints": true
     }
   ]
 }

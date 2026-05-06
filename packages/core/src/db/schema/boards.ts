@@ -7,6 +7,7 @@ export const boards = pgTable('boards', {
   description: text('description').notNull().default(''),
   publicInboxEnabled: boolean('public_inbox_enabled').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  archivedAt: timestamp('archived_at', { withTimezone: true }),
 });
 
 export type BoardRow = typeof boards.$inferSelect;
