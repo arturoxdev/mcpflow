@@ -6,7 +6,8 @@ const BoardSchema = z.object({
     name: z.string(),
     description: z.string(),
     publicInboxEnabled: z.boolean(),
-    createdAt: z.string()
+    createdAt: z.string(),
+    archivedAt: z.string().nullable()
 })
 
 

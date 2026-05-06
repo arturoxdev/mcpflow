@@ -1,6 +1,6 @@
 import { db, boards } from "./db";
 import { Board } from "./entities";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { ulid } from "ulid";
 import { columnService } from "./columns";
 
@@ -12,6 +12,12 @@ type BoardUpdate = {
 
 class BoardService {
   constructor() { }
+
+  private serialize = (board: typeof boards.$inferSelect): Board => ({
+    ...board,
+    createdAt: board.createdAt.toISOString(),
+    archivedAt: board.archivedAt?.toISOString() ?? null,
+  });
 
   create = async (name: string, userId: string, description?: string): Promise<Board> => {
     const newBoard = {
@@ -26,46 +32,37 @@ class BoardService {
 
     await columnService.ensureForUser(userId);
 
-    return {
-      ...inserted,
-      createdAt: inserted.createdAt.toISOString(),
-    };
+    return this.serialize(inserted);
   };
 
   getAll = async (userId: string): Promise<Board[]> => {
-    const result = await db.select().from(boards).where(eq(boards.userId, userId));
-    return result.map((board) => ({
-      ...board,
-      createdAt: board.createdAt.toISOString(),
-    }));
+    const result = await db
+      .select()
+      .from(boards)
+      .where(and(eq(boards.userId, userId), isNull(boards.archivedAt)));
+    return result.map(this.serialize);
   };
 
   getById = async (id: string, userId: string): Promise<Board | undefined> => {
     const [board] = await db
       .select()
       .from(boards)
-      .where(and(eq(boards.id, id), eq(boards.userId, userId)));
+      .where(and(eq(boards.id, id), eq(boards.userId, userId), isNull(boards.archivedAt)));
     if (!board) {
       return undefined;
     }
-    return {
-      ...board,
-      createdAt: board.createdAt.toISOString(),
-    };
+    return this.serialize(board);
   };
 
   getByIdPublic = async (id: string): Promise<Board | undefined> => {
     const [board] = await db
       .select()
       .from(boards)
-      .where(eq(boards.id, id));
+      .where(and(eq(boards.id, id), isNull(boards.archivedAt)));
     if (!board) {
       return undefined;
     }
-    return {
-      ...board,
-      createdAt: board.createdAt.toISOString(),
-    };
+    return this.serialize(board);
   };
 
   update = async (id: string, userId: string, patch: BoardUpdate): Promise<Board> => {
@@ -83,23 +80,43 @@ class BoardService {
     const [updated] = await db
       .update(boards)
       .set(setPayload)
-      .where(and(eq(boards.id, id), eq(boards.userId, userId)))
+      .where(and(eq(boards.id, id), eq(boards.userId, userId), isNull(boards.archivedAt)))
       .returning();
 
     if (!updated) {
       throw new Error('Board not found');
     }
 
-    return {
-      ...updated,
-      createdAt: updated.createdAt.toISOString(),
-    };
+    return this.serialize(updated);
+  };
+
+  archive = async (id: string, userId: string): Promise<Board> => {
+    const [updated] = await db
+      .update(boards)
+      .set({ archivedAt: new Date() })
+      .where(and(eq(boards.id, id), eq(boards.userId, userId), isNull(boards.archivedAt)))
+      .returning();
+
+    if (updated) {
+      return this.serialize(updated);
+    }
+
+    const [existing] = await db
+      .select()
+      .from(boards)
+      .where(and(eq(boards.id, id), eq(boards.userId, userId)));
+
+    if (!existing) {
+      throw new Error('Board not found');
+    }
+
+    return this.serialize(existing);
   };
 
   delete = async (id: string, userId: string): Promise<void> => {
     const result = await db
       .delete(boards)
-      .where(and(eq(boards.id, id), eq(boards.userId, userId)))
+      .where(and(eq(boards.id, id), eq(boards.userId, userId), isNull(boards.archivedAt)))
       .returning();
     if (result.length === 0) {
       throw new Error('Board not found');
