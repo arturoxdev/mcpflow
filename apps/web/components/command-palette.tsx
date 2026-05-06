@@ -55,8 +55,11 @@ export function CommandPalette() {
   }, [getToken])
 
   useEffect(() => {
-    fetchBoards()
-    const unsub = boardsStore.subscribe(fetchBoards)
+    const refreshBoards = () => {
+      void fetchBoards()
+    }
+    refreshBoards()
+    const unsub = boardsStore.subscribe(refreshBoards)
     return unsub
   }, [fetchBoards])
 
