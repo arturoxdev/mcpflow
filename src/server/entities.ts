@@ -7,7 +7,8 @@ const BoardSchema = z.object({
     description: z.string(),
     publicInboxEnabled: z.boolean(),
     createdAt: z.string(),
-    archivedAt: z.string().nullable()
+    archivedAt: z.string().nullable(),
+    openTaskCount: z.number(),
 })
 
 
@@ -19,17 +20,20 @@ const ColumnSchema = z.object({
     name: z.string(),
     color: z.string(),
     position: z.number(),
+    isClosed: z.boolean(),
     createdAt: z.string(),
 })
 
 const CreateColumnSchema = z.object({
     name: z.string().min(1).max(50),
     color: z.string().max(32).optional(),
+    isClosed: z.boolean().optional(),
 })
 
 const UpdateColumnSchema = z.object({
     name: z.string().min(1).max(50).optional(),
     color: z.string().max(32).optional(),
+    isClosed: z.boolean().optional(),
 })
 
 export type Column = z.infer<typeof ColumnSchema>

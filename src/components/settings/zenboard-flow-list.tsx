@@ -20,6 +20,7 @@ import { GripVertical, Pencil, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import type { Column, Task } from "@/server"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -153,9 +154,16 @@ function SortableRow({ column, taskCount, onEdit, onDelete }: SortableRowProps) 
         aria-hidden
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <span className="text-foreground truncate text-sm font-medium">
-          {column.name}
-        </span>
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="text-foreground truncate text-sm font-medium">
+            {column.name}
+          </span>
+          {column.isClosed && (
+            <Badge variant="secondary" className="shrink-0">
+              Cerrada
+            </Badge>
+          )}
+        </div>
         <span className="text-muted-foreground font-mono text-[10px]">
           {taskCount} {taskCount === 1 ? "task" : "tasks"}
         </span>

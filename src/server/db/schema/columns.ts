@@ -1,4 +1,4 @@
-import { pgTable, varchar, integer, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, varchar, integer, timestamp, boolean } from 'drizzle-orm/pg-core';
 
 export const columns = pgTable('columns', {
   id: varchar('id', { length: 26 }).primaryKey(),
@@ -6,6 +6,7 @@ export const columns = pgTable('columns', {
   name: varchar('name', { length: 50 }).notNull(),
   color: varchar('color', { length: 32 }).notNull().default('bg-muted'),
   position: integer('position').notNull(),
+  isClosed: boolean('is_closed').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

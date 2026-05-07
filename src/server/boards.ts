@@ -1,6 +1,6 @@
-import { db, boards } from "./db";
+import { db, boards, tasks, columns } from "./db";
 import { Board } from "./entities";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, count, eq, isNull } from "drizzle-orm";
 import { ulid } from "ulid";
 import { columnService } from "./columns";
 
@@ -13,10 +13,14 @@ type BoardUpdate = {
 class BoardService {
   constructor() { }
 
-  private serialize = (board: typeof boards.$inferSelect): Board => ({
+  private serialize = (
+    board: typeof boards.$inferSelect,
+    openTaskCount = 0
+  ): Board => ({
     ...board,
     createdAt: board.createdAt.toISOString(),
     archivedAt: board.archivedAt?.toISOString() ?? null,
+    openTaskCount,
   });
 
   create = async (name: string, userId: string, description?: string): Promise<Board> => {
@@ -37,10 +41,28 @@ class BoardService {
 
   getAll = async (userId: string): Promise<Board[]> => {
     const result = await db
-      .select()
+      .select({
+        id: boards.id,
+        userId: boards.userId,
+        name: boards.name,
+        description: boards.description,
+        publicInboxEnabled: boards.publicInboxEnabled,
+        createdAt: boards.createdAt,
+        archivedAt: boards.archivedAt,
+        openTaskCount: count(columns.id),
+      })
       .from(boards)
-      .where(and(eq(boards.userId, userId), isNull(boards.archivedAt)));
-    return result.map(this.serialize);
+      .leftJoin(tasks, eq(tasks.boardId, boards.id))
+      .leftJoin(
+        columns,
+        and(eq(columns.id, tasks.columnId), eq(columns.isClosed, false))
+      )
+      .where(and(eq(boards.userId, userId), isNull(boards.archivedAt)))
+      .groupBy(boards.id);
+
+    return result.map(({ openTaskCount, ...board }) =>
+      this.serialize(board, openTaskCount)
+    );
   };
 
   getById = async (id: string, userId: string): Promise<Board | undefined> => {

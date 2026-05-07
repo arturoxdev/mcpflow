@@ -60,6 +60,7 @@ class ColumnService {
         name: input.name,
         color: input.color ?? "bg-muted",
         position: nextPosition,
+        isClosed: input.isClosed ?? false,
       })
       .returning();
 
@@ -74,6 +75,7 @@ class ColumnService {
     const setPayload: Record<string, unknown> = {};
     if (typeof patch.name === "string") setPayload.name = patch.name;
     if (typeof patch.color === "string") setPayload.color = patch.color;
+    if (typeof patch.isClosed === "boolean") setPayload.isClosed = patch.isClosed;
 
     if (Object.keys(setPayload).length === 0) {
       const current = await this.getById(id, userId);
@@ -140,9 +142,9 @@ class ColumnService {
     if (existing.length > 0) return existing;
 
     const defaults = [
-      { name: "To Do", color: "bg-destructive" },
-      { name: "Doing", color: "bg-chart-3" },
-      { name: "Done", color: "bg-chart-4" },
+      { name: "To Do", color: "bg-destructive", isClosed: false },
+      { name: "Doing", color: "bg-chart-3", isClosed: false },
+      { name: "Done", color: "bg-chart-4", isClosed: true },
     ];
 
     const rows = defaults.map((d, i) => ({
@@ -151,6 +153,7 @@ class ColumnService {
       name: d.name,
       color: d.color,
       position: i,
+      isClosed: d.isClosed,
     }));
 
     const inserted = await db.insert(columns).values(rows).returning();

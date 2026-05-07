@@ -1,11 +1,11 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAuth, useUser, UserButton } from "@clerk/nextjs"
 import { BookOpen, KeyRound, Settings, Sparkles } from "lucide-react"
-import type { Board, Task } from "@/server"
+import type { Board } from "@/server"
 
 import {
   Sidebar,
@@ -37,40 +37,30 @@ export function AppSidebar() {
   const { getToken } = useAuth()
   const { user } = useUser()
   const [boards, setBoards] = useState<Board[]>([])
-  const [tasks, setTasks] = useState<Task[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  const fetchAll = useCallback(async () => {
+  const fetchBoards = useCallback(async () => {
     try {
       const token = await getToken()
       const headers = { Authorization: `Bearer ${token}` }
-      const [bRes, tRes] = await Promise.all([
-        fetch("/api/boards", { headers }),
-        fetch("/api/tasks", { headers }),
-      ])
-      if (bRes.ok) setBoards(await bRes.json())
-      if (tRes.ok) setTasks(await tRes.json())
+      const res = await fetch("/api/boards", { headers })
+      if (res.ok) setBoards(await res.json())
     } finally {
       setIsLoading(false)
     }
   }, [getToken])
 
   useEffect(() => {
-    fetchAll()
-    const u1 = boardsStore.subscribe(fetchAll)
-    const u2 = tasksStore.subscribe(fetchAll)
+    fetchBoards()
+    const u1 = boardsStore.subscribe(fetchBoards)
+    const u2 = tasksStore.subscribe(fetchBoards)
     return () => {
       u1()
       u2()
     }
-  }, [fetchAll])
+  }, [fetchBoards])
 
-  const totalCount = tasks.length
-  const countByBoard = useMemo(() => {
-    const m = new Map<string, number>()
-    for (const t of tasks) m.set(t.boardId, (m.get(t.boardId) ?? 0) + 1)
-    return m
-  }, [tasks])
+  const totalCount = boards.reduce((acc, b) => acc + b.openTaskCount, 0)
 
   const firstName = user?.firstName ?? user?.username ?? "Tú"
   const initial = firstName.charAt(0).toUpperCase()
@@ -167,7 +157,7 @@ export function AppSidebar() {
                           />
                           <span className="truncate">{b.name}</span>
                           <span className="text-muted-foreground ml-auto font-mono text-xs">
-                            {countByBoard.get(b.id) ?? 0}
+                            {b.openTaskCount}
                           </span>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
