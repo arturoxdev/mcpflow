@@ -21,6 +21,7 @@ export async function POST(request: Request) {
   const body = await request.json()
   const name = typeof body?.name === 'string' ? body.name.trim() : ''
   const color = typeof body?.color === 'string' ? body.color : undefined
+  const isClosed = typeof body?.isClosed === 'boolean' ? body.isClosed : undefined
 
   if (!name) {
     return NextResponse.json({ error: 'Name is required' }, { status: 400 })
@@ -29,6 +30,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Name must be 50 characters or less' }, { status: 400 })
   }
 
-  const column = await columnService.create(session.userId, { name, color })
+  const column = await columnService.create(session.userId, { name, color, isClosed })
   return NextResponse.json(column, { status: 201 })
 }

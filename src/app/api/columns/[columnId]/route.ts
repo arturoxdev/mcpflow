@@ -13,7 +13,7 @@ export async function PATCH(
   const { columnId } = await params
 
   const body = await request.json()
-  const patch: { name?: string; color?: string } = {}
+  const patch: { name?: string; color?: string; isClosed?: boolean } = {}
   if (typeof body?.name === 'string') {
     const name = body.name.trim()
     if (!name) {
@@ -25,6 +25,7 @@ export async function PATCH(
     patch.name = name
   }
   if (typeof body?.color === 'string') patch.color = body.color
+  if (typeof body?.isClosed === 'boolean') patch.isClosed = body.isClosed
 
   try {
     const updated = await columnService.update(columnId, session.userId, patch)

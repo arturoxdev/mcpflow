@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
+import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
 
 export const COLUMN_COLOR_OPTIONS: { value: string; label: string }[] = [
@@ -40,6 +41,7 @@ const formSchema = z.object({
     .min(1, "El nombre es obligatorio")
     .max(50, "Máximo 50 caracteres"),
   color: z.string().min(1, "Selecciona un color"),
+  isClosed: z.boolean(),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -65,6 +67,7 @@ export function ColumnFormDialog({
     defaultValues: {
       name: column?.name ?? "",
       color: column?.color ?? "bg-muted-foreground",
+      isClosed: column?.isClosed ?? false,
     },
   })
 
@@ -73,6 +76,7 @@ export function ColumnFormDialog({
       form.reset({
         name: column?.name ?? "",
         color: column?.color ?? "bg-muted-foreground",
+        isClosed: column?.isClosed ?? false,
       })
     }
   }, [open, column, form])
@@ -103,6 +107,7 @@ export function ColumnFormDialog({
   }
 
   const selectedColor = form.watch("color")
+  const isClosedValue = form.watch("isClosed")
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -155,6 +160,24 @@ export function ColumnFormDialog({
               </div>
               <FieldDescription>
                 Color del indicador en el kanban.
+              </FieldDescription>
+            </Field>
+            <Field>
+              <div className="flex items-center justify-between gap-3">
+                <FieldLabel htmlFor="column-is-closed" className="cursor-pointer">
+                  Marcar como cerrada
+                </FieldLabel>
+                <Switch
+                  id="column-is-closed"
+                  checked={isClosedValue}
+                  onCheckedChange={(checked) =>
+                    form.setValue("isClosed", checked, { shouldDirty: true })
+                  }
+                />
+              </div>
+              <FieldDescription>
+                Las tasks en columnas cerradas siguen visibles, pero no cuentan
+                en los contadores del sidebar.
               </FieldDescription>
             </Field>
           </FieldGroup>
