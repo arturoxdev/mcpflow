@@ -1,9 +1,11 @@
 import { pgTable, text, varchar, integer, pgEnum } from 'drizzle-orm/pg-core';
 import { boards } from './boards';
 import { columns } from './columns';
+import { sprints } from './sprints';
 
 export const priorityEnum = pgEnum('priority', ['low', 'medium', 'high']);
 export const sourceEnum = pgEnum('source', ['internal', 'external']);
+export const sprintDayEnum = pgEnum('sprint_day', ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']);
 
 export const tasks = pgTable('tasks', {
   id: varchar('id', { length: 26 }).primaryKey(),
@@ -20,6 +22,11 @@ export const tasks = pgTable('tasks', {
     .notNull()
     .references(() => boards.id, { onDelete: 'cascade' }),
   pr: integer('pr').notNull(),
+  sprintId: varchar('sprint_id', { length: 26 }).references(() => sprints.id, {
+    onDelete: 'set null',
+  }),
+  sprintDay: sprintDayEnum('sprint_day'),
+  sprintPosition: integer('sprint_position'),
 });
 
 export type TaskRow = typeof tasks.$inferSelect;

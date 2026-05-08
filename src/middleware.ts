@@ -13,6 +13,9 @@ const isProgrammaticApi = createRouteMatcher([
   '/api/boards',
   '/api/boards/(.*)',
   '/api/tasks',
+  '/api/tasks/(.*)',
+  '/api/sprints',
+  '/api/sprints/(.*)',
   '/api/public/(.*)',
 ])
 

@@ -2,6 +2,11 @@ import { boardService } from "./boards";
 import { taskService } from "./tasks";
 import { columnService, ColumnHasTasksError } from "./columns";
 import { apiKeyService, API_KEY_PREFIX } from "./api-keys";
+import {
+  sprintService,
+  SprintWeekTakenError,
+  SprintStartDateNotMondayError,
+} from "./sprints";
 
 export {
   boardService,
@@ -10,5 +15,8 @@ export {
   ColumnHasTasksError,
   apiKeyService,
   API_KEY_PREFIX,
+  sprintService,
+  SprintWeekTakenError,
+  SprintStartDateNotMondayError,
 };
 export * from "./entities"

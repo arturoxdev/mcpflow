@@ -32,12 +32,21 @@ _Avoid_: done task, finished task, completed task. ("Done" is the name of a Colu
 A public, unauthenticated form at `/public/boards/{boardId}` where external clients can submit Tasks to a Board without logging in. Toggled per-Board via `publicInboxEnabled`. When the Board is archived, the public URL returns 404 even if `publicInboxEnabled` is still `true` (state is preserved, not mutated, so future restoration works).
 _Avoid_: shared inbox, public form, share link.
 
+**Sprint**:
+A weekly planning container, identified by its `start_date` (always a Monday) and scoped to one User. **At most one Sprint per ISO week per user** (unique constraint on `(user_id, start_date)`). A Sprint does **not** own Tasks: a Task gains an optional `sprint_id` reference, orthogonal to its Board and Column. Membership in a Sprint is a *second dimension* (planning) — moving a Task to a Closed Column does not remove it from the Sprint; it stays in its Sprint Day, rendered as completed (state derived from the Column, not duplicated). Sprints span Boards: a single Sprint can hold Tasks belonging to several Boards.
+_Avoid_: cycle, ciclo, semana de tareas, week-plan.
+
+**Sprint Day**:
+A specific day of the week (`mon`..`sun`) within a Sprint where a Task is scheduled. Stored on the Task as `sprint_day` (enum). Mandatory whenever `sprint_id` is set — there is no "Task in Sprint, no day yet" limbo. Stored as enum, not date, because Sprints are always Monday-to-Sunday and the day is purely a slot, not an absolute timestamp (timezone-free by construction).
+_Avoid_: sprint slot, day-bucket, scheduled date.
+
 ## Relationships
 
-- A **User** owns many **Boards**
+- A **User** owns many **Boards** and many **Sprints**
 - A **Board** contains many **Tasks** and references the user's **Columns**
-- A **Task** belongs to exactly one **Board** and one **Column**
+- A **Task** belongs to exactly one **Board** and one **Column**, and optionally to one **Sprint** + one **Sprint Day**
 - A **Column** is either Open (`isClosed = false`) or Closed (`isClosed = true`); a Task is **Open** or **Closed** by inheritance from its Column
+- A **Sprint** holds zero-or-more **Tasks** scheduled to its days; a Task can be in at most one Sprint at a time. Tasks of an **Archived Board** disappear from any Sprint view via the same `archived_at IS NULL` JOIN — no explicit cleanup
 - An **Archived Board** continues to own its **Tasks** in the DB; both become invisible together
 - A **Public Inbox** belongs to one **Board** and is dormant when the Board is Archived
 
