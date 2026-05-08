@@ -57,6 +57,13 @@
       "when": 1778186382580,
       "tag": "0007_add_is_closed_to_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1778256330270,
+      "tag": "0008_far_red_shift",
+      "breakpoints": true
     }
   ]
 }

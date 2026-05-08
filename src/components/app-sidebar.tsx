@@ -4,8 +4,9 @@ import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAuth, useUser, UserButton } from "@clerk/nextjs"
-import { BookOpen, KeyRound, Settings, Sparkles } from "lucide-react"
+import { BookOpen, CalendarDays, KeyRound, Plus, Settings, Sparkles } from "lucide-react"
 import type { Board } from "@/server"
+import { dayOfWeekKey, mondayOfWeek, toIsoDateString } from "@/lib/sprint-week"
 
 import {
   Sidebar,
@@ -37,28 +38,42 @@ export function AppSidebar() {
   const { getToken } = useAuth()
   const { user } = useUser()
   const [boards, setBoards] = useState<Board[]>([])
+  const [weekSummary, setWeekSummary] = useState<{
+    sprintId: string | null
+    openTodayCount: number
+  } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const fetchBoards = useCallback(async () => {
+  const fetchAll = useCallback(async () => {
     try {
       const token = await getToken()
       const headers = { Authorization: `Bearer ${token}` }
-      const res = await fetch("/api/boards", { headers })
-      if (res.ok) setBoards(await res.json())
+      const now = new Date()
+      const weekStart = toIsoDateString(mondayOfWeek(now))
+      const today = dayOfWeekKey(now)
+      const [bRes, wRes] = await Promise.all([
+        fetch("/api/boards", { headers }),
+        fetch(
+          `/api/sprints/today-summary?weekStart=${weekStart}&today=${today}`,
+          { headers }
+        ),
+      ])
+      if (bRes.ok) setBoards(await bRes.json())
+      if (wRes.ok) setWeekSummary(await wRes.json())
     } finally {
       setIsLoading(false)
     }
   }, [getToken])
 
   useEffect(() => {
-    fetchBoards()
-    const u1 = boardsStore.subscribe(fetchBoards)
-    const u2 = tasksStore.subscribe(fetchBoards)
+    fetchAll()
+    const u1 = boardsStore.subscribe(fetchAll)
+    const u2 = tasksStore.subscribe(fetchAll)
     return () => {
       u1()
       u2()
     }
-  }, [fetchBoards])
+  }, [fetchAll])
 
   const totalCount = boards.reduce((acc, b) => acc + b.openTaskCount, 0)
 
@@ -109,6 +124,21 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
+                  isActive={pathname === "/week" || pathname.startsWith("/week/")}
+                  tooltip="Semana"
+                  render={<Link href="/week" />}
+                >
+                  <CalendarDays className="size-4" />
+                  <span>Semana</span>
+                  {!isLoading && weekSummary && (
+                    <span className="text-muted-foreground ml-auto font-mono text-xs">
+                      {weekSummary.openTodayCount}
+                    </span>
+                  )}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
                   isActive={pathname === "/general"}
                   tooltip="General"
                   render={<Link href="/general" />}
@@ -119,6 +149,26 @@ export function AppSidebar() {
                       {totalCount}
                     </span>
                   )}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel className="uppercase tracking-wider">
+            Sprints
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={pathname === "/sprints" || pathname.startsWith("/sprints/")}
+                  tooltip="Sprints"
+                  render={<Link href="/sprints" />}
+                >
+                  <Plus className="size-4" />
+                  <span>Nuevo Sprint</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
