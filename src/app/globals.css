@@ -58,6 +58,10 @@
   --priority-med:  rgb(94, 129, 172);
   --priority-high: rgb(184, 107, 83);
 
+  /* ── Effort glyph colors (yellow Zap = quick / green Snail = slow) ─ */
+  --effort-low:  rgb(235, 203, 139);  /* aurora yellow */
+  --effort-high: rgb(163, 190, 140);  /* aurora green */
+
   /* ── Typography (Geist pairing) ───────────────────────────── */
   --font-sans:  var(--font-geist-sans), ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
   --font-serif: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
@@ -136,6 +140,9 @@
   --priority-low:  rgb(107, 120, 137);
   --priority-med:  rgb(136, 192, 208);
   --priority-high: rgb(208, 135, 112);
+
+  --effort-low:  rgb(235, 203, 139);
+  --effort-high: rgb(163, 190, 140);
 }
 
 @theme inline {
@@ -179,6 +186,8 @@
   --color-priority-low:  var(--priority-low);
   --color-priority-med:  var(--priority-med);
   --color-priority-high: var(--priority-high);
+  --color-effort-low:  var(--effort-low);
+  --color-effort-high: var(--effort-high);
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);

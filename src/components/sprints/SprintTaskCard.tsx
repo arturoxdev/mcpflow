@@ -4,6 +4,7 @@ import { useDraggable } from "@dnd-kit/core"
 import { MoreHorizontal } from "lucide-react"
 
 import { PriorityGlyph } from "@/components/kanban/PriorityGlyph"
+import { EffortGlyph } from "@/components/kanban/EffortGlyph"
 import { Badge } from "@/components/ui/badge"
 import {
   DropdownMenu,
@@ -72,6 +73,8 @@ export function SprintTaskCard({
 
         <div className="text-muted-foreground mt-2 flex items-center gap-2 text-xs">
           <PriorityGlyph priority={task.priority} />
+          {task.effort && <span className="bg-border h-2.5 w-px" />}
+          <EffortGlyph effort={task.effort} />
           {boardName && (
             <Badge variant="secondary" className="px-1.5 py-0 text-[10px] font-normal">
               {boardName}

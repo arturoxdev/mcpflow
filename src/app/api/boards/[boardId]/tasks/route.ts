@@ -37,10 +37,14 @@ export async function POST(
   }
 
   const body = await request.json()
-  const { title, description, priority, columnId } = body
+  const { title, description, priority, columnId, effort } = body
 
   if (!title) {
     return NextResponse.json({ error: 'Title is required' }, { status: 400 })
+  }
+
+  if (effort !== undefined && effort !== null && effort !== 'low' && effort !== 'high') {
+    return NextResponse.json({ error: "effort must be 'low', 'high', or null" }, { status: 400 })
   }
 
   let resolvedColumnId: string | undefined
@@ -68,6 +72,7 @@ export async function POST(
     columnId: resolvedColumnId,
     boardId,
     userId: session.userId,
+    effort: effort ?? null,
   })
 
   return NextResponse.json(newTask, { status: 201 })

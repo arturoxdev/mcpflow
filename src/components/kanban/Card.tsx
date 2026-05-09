@@ -6,6 +6,7 @@ import { Task } from "@/server"
 
 import { cn } from "@/lib/utils"
 import { PriorityGlyph } from "./PriorityGlyph"
+import { EffortGlyph } from "./EffortGlyph"
 
 interface CardProps {
   task: Task
@@ -43,6 +44,8 @@ export function Card({ task, boardId, boardName }: CardProps) {
 
         <div className="text-muted-foreground mt-2 flex items-center gap-2 text-xs">
           <PriorityGlyph priority={task.priority} />
+          {task.effort && <span className="bg-border h-2.5 w-px" />}
+          <EffortGlyph effort={task.effort} />
           {boardName && <span className="truncate">{boardName}</span>}
           <span className="bg-border h-2.5 w-px" />
           <span className="font-mono">#PR-{prPadded}</span>

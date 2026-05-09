@@ -36,7 +36,7 @@ export async function PATCH(
   }
 
   const body = await request.json()
-  const { title, description, priority, columnId } = body
+  const { title, description, priority, columnId, effort } = body
 
   if (title !== undefined) task.title = title
   if (description !== undefined) task.description = description
@@ -47,6 +47,12 @@ export async function PATCH(
       return NextResponse.json({ error: 'Column not found' }, { status: 400 })
     }
     task.columnId = column.id
+  }
+  if (effort !== undefined) {
+    if (effort !== null && effort !== 'low' && effort !== 'high') {
+      return NextResponse.json({ error: "effort must be 'low', 'high', or null" }, { status: 400 })
+    }
+    task.effort = effort
   }
 
   await taskService.update(taskId, boardId, session.userId, task)

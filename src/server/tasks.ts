@@ -1,4 +1,4 @@
-import { CreateTask, ScheduleTask, SprintDay, Task, TaskWithBoard } from "./entities";
+import { CreateTask, ScheduleTask, SprintDay, Task, TaskWithBoard, UpdateTask } from "./entities";
 import { db, tasks, boards, sprints, columns } from "./db";
 import { eq, and, asc, max, isNull, count, sql } from "drizzle-orm";
 import { ulid } from "ulid";
@@ -17,6 +17,7 @@ const TASK_SELECT = {
   sprintId: tasks.sprintId,
   sprintDay: tasks.sprintDay,
   sprintPosition: tasks.sprintPosition,
+  effort: tasks.effort,
 } as const;
 
 class TaskService {
@@ -57,6 +58,7 @@ class TaskService {
       boardId: task.boardId,
       userId: task.userId,
       pr,
+      effort: task.effort ?? null,
     };
 
     const [inserted] = await db.insert(tasks).values(newTask).returning();
@@ -119,7 +121,7 @@ class TaskService {
     id: string,
     boardId: string,
     userId: string,
-    task: CreateTask
+    task: UpdateTask
   ): Promise<Task> => {
     await this.assertActiveBoard(boardId, userId);
 
@@ -130,6 +132,7 @@ class TaskService {
         description: task.description,
         priority: task.priority,
         columnId: task.columnId,
+        effort: task.effort,
       })
       .where(
         and(
