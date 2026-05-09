@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils"
 import { taskFormSchema, type TaskFormValues } from "@/lib/schemas/task"
 import { MarkdownEditor } from "./MarkdownEditor"
 import { PriorityPicker } from "./PriorityPicker"
+import { EffortPicker } from "./EffortPicker"
 
 type TaskFormMode = "create" | "edit"
 
@@ -73,9 +74,12 @@ export function TaskForm({
       ? {
           title: task.title,
           priority: task.priority,
+          // Effort is required at the form layer (create + edit). When editing a legacy Task
+          // whose effort is null, we leave the picker unselected — the resolver will block submit.
+          effort: task.effort ?? undefined,
           description: task.description ?? "",
         }
-      : { title: "", priority: undefined, description: "" },
+      : { title: "", priority: undefined, effort: undefined, description: "" },
   })
 
   const isDirty = form.formState.isDirty
@@ -108,6 +112,7 @@ export function TaskForm({
               title: values.title.trim(),
               description: values.description.trim(),
               priority: values.priority,
+              effort: values.effort,
             }),
           }
         )
@@ -119,6 +124,7 @@ export function TaskForm({
             title: values.title.trim(),
             description: values.description.trim(),
             priority: values.priority,
+            effort: values.effort,
           }),
         })
       }
@@ -160,12 +166,14 @@ export function TaskForm({
     const priority = values.priority ?? task.priority
     const description = (values.description ?? task.description ?? "").trim()
 
+    const effort = values.effort ?? task.effort
     const md = [
       `# ${idStr} — ${title}`,
       ``,
       `- **Proyecto:** ${boardName}`,
       `- **ID:** ${idStr}`,
       `- **Prioridad:** ${priority}`,
+      `- **Esfuerzo:** ${effort ?? "sin clasificar"}`,
       ``,
       `## Descripción`,
       ``,
@@ -303,11 +311,33 @@ export function TaskForm({
         control={form.control}
         name="priority"
         render={({ field, fieldState }) => (
-          <div className="mb-9 flex flex-wrap items-center gap-4">
+          <div className="mb-5 flex flex-wrap items-center gap-4">
             <span className="text-muted-foreground/70 min-w-[90px] text-[11px] uppercase tracking-[0.16em]">
               Prioridad
             </span>
             <PriorityPicker
+              value={field.value}
+              onChange={field.onChange}
+              invalid={!!fieldState.error}
+            />
+            {fieldState.error && (
+              <p className="text-destructive text-xs">
+                {fieldState.error.message}
+              </p>
+            )}
+          </div>
+        )}
+      />
+
+      <Controller
+        control={form.control}
+        name="effort"
+        render={({ field, fieldState }) => (
+          <div className="mb-9 flex flex-wrap items-center gap-4">
+            <span className="text-muted-foreground/70 min-w-[90px] text-[11px] uppercase tracking-[0.16em]">
+              Esfuerzo
+            </span>
+            <EffortPicker
               value={field.value}
               onChange={field.onChange}
               invalid={!!fieldState.error}

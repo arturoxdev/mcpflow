@@ -38,6 +38,7 @@ const TASK_SELECT = {
   sprintId: tasks.sprintId,
   sprintDay: tasks.sprintDay,
   sprintPosition: tasks.sprintPosition,
+  effort: tasks.effort,
 } as const;
 
 class SprintService {

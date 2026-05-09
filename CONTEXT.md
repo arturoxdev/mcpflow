@@ -40,6 +40,10 @@ _Avoid_: cycle, ciclo, semana de tareas, week-plan.
 A specific day of the week (`mon`..`sun`) within a Sprint where a Task is scheduled. Stored on the Task as `sprint_day` (enum). Mandatory whenever `sprint_id` is set — there is no "Task in Sprint, no day yet" limbo. Stored as enum, not date, because Sprints are always Monday-to-Sunday and the day is purely a slot, not an absolute timestamp (timezone-free by construction).
 _Avoid_: sprint slot, day-bucket, scheduled date.
 
+**Effort**:
+An optional tag on a Task (`low` | `high`) that marks how much time/work the user expects it to take. Nullable by design — `NULL` means "sin clasificar" and is a first-class state, not a missing value. The internal `TaskForm` requires the user to pick `low` or `high` (create and edit); the Public Inbox and REST API accept it as optional, so external entries land as `NULL` until triaged. Orthogonal to **Priority**: a Task can be `priority = high, effort = low` ("urgent quick win") or any other combination. Rendered as a Lucide icon — yellow `Zap` for `low`, green `Snail` for `high` — only when set.
+_Avoid_: attention, atención, size, tamaño, weight, complexity.
+
 ## Relationships
 
 - A **User** owns many **Boards** and many **Sprints**
@@ -49,6 +53,7 @@ _Avoid_: sprint slot, day-bucket, scheduled date.
 - A **Sprint** holds zero-or-more **Tasks** scheduled to its days; a Task can be in at most one Sprint at a time. Tasks of an **Archived Board** disappear from any Sprint view via the same `archived_at IS NULL` JOIN — no explicit cleanup
 - An **Archived Board** continues to own its **Tasks** in the DB; both become invisible together
 - A **Public Inbox** belongs to one **Board** and is dormant when the Board is Archived
+- A **Task** has a mandatory **Priority** (always set) and an optional **Effort** (may be `NULL`); the two dimensions are independent
 
 ## Example dialogue
 
@@ -67,3 +72,4 @@ _Avoid_: sprint slot, day-bucket, scheduled date.
 - **"archive" vs "soft delete"** — resolved: we say **archive**. Soft delete describes the storage mechanic (rows preserved); archive describes the user intent (project closed). The user-facing word is "Archivar".
 - **"done" vs "closed"** — resolved: **Done** is the default *name* of a Column instance (created by the seed). **Closed** is the *categorical state* of any Column with `isClosed = true`. Multiple Columns can be Closed at once (e.g. "Done" + "Cancelled"); none being Closed is also valid (counters fall back to total). Identifying "the closed state" by Column name is explicitly rejected — see ADR.
 - **"ticket" / "card" / "item"** — resolved: the canonical term is **Task**. The others appear in casual conversation but never in code, API, or copy.
+- **"atención" + "rápida/lenta"** — resolved: the canonical term is **Effort** (UI label "Esfuerzo") with values `low`/`high` ("bajo"/"alto"). The original wording mixed a noun about focus with adjectives about speed; renamed to keep the noun and its values aligned. See ADR `0004-effort-as-optional-task-tag.md` for why it is nullable while **Priority** is not.

@@ -43,6 +43,9 @@ export type UpdateColumn = z.infer<typeof UpdateColumnSchema>
 export const SPRINT_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
 export type SprintDay = (typeof SPRINT_DAYS)[number]
 
+export const EFFORT_VALUES = ['low', 'high'] as const
+export type Effort = (typeof EFFORT_VALUES)[number]
+
 const TaskSchema = z.object({
     id: z.string(),
     userId: z.string(),
@@ -57,14 +60,28 @@ const TaskSchema = z.object({
     sprintId: z.string().nullable(),
     sprintDay: z.enum(SPRINT_DAYS).nullable(),
     sprintPosition: z.number().nullable(),
+    effort: z.enum(EFFORT_VALUES).nullable(),
 })
 
+// Effort is optional/nullable on creation: the internal TaskForm validates it client-side,
+// while Public Inbox and REST API entries are allowed to land with effort = null.
 const CreateTaskSchema = TaskSchema.omit({ id: true, pr: true, sprintId: true, sprintDay: true, sprintPosition: true }).extend({
     source: z.enum(['internal', 'external']).optional(),
     createdBy: z.string().nullable().optional(),
+    effort: z.enum(EFFORT_VALUES).nullable().optional(),
+})
+
+// Update payload at the server boundary stays permissive: REST PATCH can leave effort untouched
+// (legacy tasks remain null), and AI agents are not forced to classify on edit. The "no path back
+// to null from the UI" rule lives client-side inside TaskForm's own Zod schema.
+const UpdateTaskSchema = TaskSchema.omit({ id: true, pr: true, sprintId: true, sprintDay: true, sprintPosition: true }).extend({
+    source: z.enum(['internal', 'external']).optional(),
+    createdBy: z.string().nullable().optional(),
+    effort: z.enum(EFFORT_VALUES).nullable().optional(),
 })
 
 export type CreateTask = z.infer<typeof CreateTaskSchema>
+export type UpdateTask = z.infer<typeof UpdateTaskSchema>
 export type Task = z.infer<typeof TaskSchema>
 export type Priority = Task['priority']
 

@@ -6,6 +6,7 @@ import { sprints } from './sprints';
 export const priorityEnum = pgEnum('priority', ['low', 'medium', 'high']);
 export const sourceEnum = pgEnum('source', ['internal', 'external']);
 export const sprintDayEnum = pgEnum('sprint_day', ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']);
+export const effortEnum = pgEnum('effort', ['low', 'high']);
 
 export const tasks = pgTable('tasks', {
   id: varchar('id', { length: 26 }).primaryKey(),
@@ -27,6 +28,7 @@ export const tasks = pgTable('tasks', {
   }),
   sprintDay: sprintDayEnum('sprint_day'),
   sprintPosition: integer('sprint_position'),
+  effort: effortEnum('effort'),
 });
 
 export type TaskRow = typeof tasks.$inferSelect;

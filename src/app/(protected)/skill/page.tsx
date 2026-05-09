@@ -73,6 +73,7 @@ Task:
   title: string
   description: string
   priority: 'low' | 'medium' | 'high'
+  effort: 'low' | 'high' | null   // optional, null = "sin clasificar"
   columnId: string   // FK to a column (columns are global per user — list with GET /api/columns)
   boardId: string
   pr: number         // correlative number inside the board
@@ -144,7 +145,7 @@ Returns 404 \`{ error: "Column not found" }\` if the \`columnId\` does not belon
 
 ### Create a task
 
-Only \`title\` is required. \`priority\` defaults to \`medium\`. If you skip \`columnId\`, the task lands in the first column of the board.
+Only \`title\` is required. \`priority\` defaults to \`medium\`. \`effort\` is optional (\`'low'\` | \`'high'\`); if you omit it the task is created with \`effort: null\` ("sin clasificar"). The internal UI form requires effort to be picked, but agents calling this endpoint do not — only set it when you have grounds to estimate. If you skip \`columnId\`, the task lands in the first column of the board.
 
 \`\`\`bash
 curl -s -X POST "{{API_BASE_URL}}/api/boards/<boardId>/tasks" \\
@@ -154,6 +155,7 @@ curl -s -X POST "{{API_BASE_URL}}/api/boards/<boardId>/tasks" \\
     "title": "Write launch announcement",
     "description": "Draft the blog post and social copy",
     "priority": "high",
+    "effort": "low",
     "columnId": "<columnId>"
   }'
 \`\`\`

@@ -10,6 +10,9 @@ export const taskFormSchema = z.object({
   priority: z.enum(["low", "medium", "high"], {
     message: "Selecciona una prioridad",
   }),
+  effort: z.enum(["low", "high"], {
+    message: "Selecciona un esfuerzo",
+  }),
   description: z.string(),
 })
 
@@ -19,4 +22,9 @@ export const PRIORITY_OPTIONS: { value: TaskFormValues["priority"]; label: strin
   { value: "low", label: "Baja" },
   { value: "medium", label: "Media" },
   { value: "high", label: "Alta" },
+]
+
+export const EFFORT_OPTIONS: { value: TaskFormValues["effort"]; label: string }[] = [
+  { value: "low", label: "Bajo" },
+  { value: "high", label: "Alto" },
 ]
