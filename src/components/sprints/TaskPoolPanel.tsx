@@ -84,6 +84,14 @@ export function TaskPoolPanel({ pool, boards }: TaskPoolPanelProps) {
     })
   }, [pool, search, boardFilter])
 
+  // base-ui Select.Value renders the raw value by default. The `items` prop
+  // supplies the value→label map so the trigger shows the board name.
+  const boardItems = useMemo<Record<string, string>>(() => {
+    const m: Record<string, string> = { all: "Todos los Boards" }
+    for (const b of boards) m[b.id] = b.name
+    return m
+  }, [boards])
+
   const { setNodeRef: setDropRef, isOver } = useDroppable({ id: "pool" })
 
   if (!open) {
@@ -131,7 +139,11 @@ export function TaskPoolPanel({ pool, boards }: TaskPoolPanelProps) {
         placeholder="Buscar..."
       />
 
-      <Select value={boardFilter} onValueChange={(v) => setBoardFilter(v ?? "all")}>
+      <Select
+        value={boardFilter}
+        onValueChange={(v) => setBoardFilter(v ?? "all")}
+        items={boardItems}
+      >
         <SelectTrigger>
           <SelectValue placeholder="Todos los Boards" />
         </SelectTrigger>
